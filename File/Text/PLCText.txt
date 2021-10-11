@@ -1,0 +1,3 @@
+PLC {Name} disconnected in {Time}
+PLC {Name} connected after {DiffTime} in {Time}
+PLC {Name} is Tested (virtual)Sensor {format} : {data}

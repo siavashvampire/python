@@ -1,0 +1,610 @@
+import json
+import threading
+import winsound
+from datetime import datetime
+from time import sleep
+
+from dateutil.relativedelta import relativedelta
+from persiantools.jdatetime import JalaliDateTime
+from pyModbusTCP import utils
+from pyModbusTCP.client import ModbusClient
+from tinydb import TinyDB
+
+import app.Logging.app_provider.admin.MersadLogging as Logging
+from app.LineMonitoring.app_provider.api.LastLog import getABSecond, getText
+from app.LineMonitoring.app_provider.api.ReadText import PLCConnectBaleText, PLCDisconnectBaleText, VirtualText
+from core.config.Config import DADBPath, ModbusTimeout, PLCTimeSleepMax, PLCTimeSleepMin, PLCRefreshTime, \
+    PLCSleepTimeStepUp, \
+    PLCSleepTimeStepDown, DisconnectAlarmTime, send_time_format, DATableName
+from core.config.Config import RegisterForData, RegisterForCounter, RegisterForStartRead, RegisterForEndRead
+
+
+# color = QColor(19, 164, 70)
+# alpha = 255
+# GreenColor = "{r}, {g}, {b}, {a}".format(r=color.red(),
+#                                          g=color.green(),
+#                                          b=color.blue(),
+#                                          a=alpha
+#                                          )
+
+
+def clear_plc_ui(ui):
+    for i in range(4):
+        ui.lineEdit_Name[i].setText("")
+        ui.lineEdit_IP[i].setText("")
+        ui.lineEdit_TestPort[i].setText("")
+        ui.lbl_Test_Virtual[i].setText("")
+        ui.PLC_Status_lbl[i].setText("")
+        ui.PLC_Status_lbl[i].setStyleSheet("background: transparent")
+        ui.PLC_Counter_lbl[i].setText("")
+        ui.PLC_Counter_lbl[i].setStyleSheet("background: transparent")
+        ui.PLC_Status_lbl[i].clear()
+        ui.checkBox_Test_Virtual[i].setEnabled(False)
+        ui.checkBox_Counter[i].setEnabled(False)
+        ui.checkBox_Counter[i].setChecked(False)
+        ui.checkBox_Test_Virtual[i].setChecked(False)
+
+
+def get_plc(ui):
+    plc_db = TinyDB(DADBPath)
+    plc_db.drop_tables()
+    plc_db.close()
+    plc_db = TinyDB(DADBPath).table('DAUnits')
+    for i in range(4):
+        if str(ui.lineEdit_Name[i].text()) is not "":
+            name = str(ui.lineEdit_Name[i].text())
+            if str(ui.lineEdit_TestPort[i].text()) is not "":
+                test_port = int(ui.lineEdit_TestPort[i].text())
+            else:
+                test_port = 0
+            if str(ui.lineEdit_IP[i].text()) is not "":
+                ip = str(ui.lineEdit_IP[i].text())
+            else:
+                ip = "192.168.1.240"
+            plc_db.insert({'Name': str(name), 'IP': str(ip), 'Port': str("502"), 'TestPort': str(test_port)})
+
+
+def extract_choose(data):
+    choose = data % 1000
+    data = (data // 1000) * 1000
+    return choose, data
+
+
+class PLCModel:
+    def __init__(self, db_id=0, ip="192.168.1.240", port=502, name="", test_port=0, messenger_queue=None,
+                 app_name="electrical_substation",
+                 line_monitoring_queue=None,
+                 electrical_substation_queue=None):
+        from core.theme.pic import Pics
+
+        self.DBid = db_id
+        self.deleteMark = Pics.deleteMark
+        self.checkMark = Pics.checkMark
+        self.Port = port
+        self.TestPort = test_port
+        self.IP = ip
+        self.Name = name
+        self.app_name = app_name
+        self.ret_num = 0
+        self.disc_msg_sent = False
+        self.Connected = False
+        self.first_good = True
+        self.first_bad = True
+        self.SleepTime = 0
+        self.ReadCounter = 0
+        self.DataCounter = 0
+        self.DPS = 0
+        self.RPS = 0
+        self.TimeDis = False
+        self.DiffTime = False
+        if self.app_name == "line_monitoring":
+            self.thread_func = self.line_monitoring_read_data_from_plc_thread
+        elif self.app_name == "electrical_substation":
+            self.thread_func = self.line_monitoring_read_data_from_plc_thread
+        if messenger_queue is not None:
+            self.MessengerQ = messenger_queue
+        self.client = ModbusClient(host=self.IP, port=self.Port, auto_open=True, auto_close=False,
+                                   timeout=ModbusTimeout, debug=False)
+        self.line_monitoring_queue = line_monitoring_queue
+        self.electrical_substation_queue = electrical_substation_queue
+        self.stop_thread = False
+        self.ReadingDataThread = threading.Thread(target=self.thread_func,
+                                                  args=(lambda: self.stop_thread,))
+
+        if db_id:
+            self.update()
+
+        # if self.DBid < 5 and UI is not None:
+        #     self.PLC_Status_lbl = UI.PLC_Status_lbl[self.DBid - 1]
+        #     self.PLC_Counter_lbl = UI.PLC_Counter_lbl[self.DBid - 1]
+        #     self.lbl_Test = UI.lbl_Test_Virtual[self.DBid - 1]
+        #     self.checkBox_Test = UI.checkBox_Test_Virtual[self.DBid - 1]
+        #     self.checkBox_Counter = UI.checkBox_Counter[self.DBid - 1]
+        #     self.Name_LE = UI.lineEdit_Name[self.DBid - 1]
+        #     self.IP_LE = UI.lineEdit_IP[self.DBid - 1]
+        #     self.TestPort_LE = UI.lineEdit_TestPort[self.DBid - 1]
+        #
+        #     self.Name_LE.setText(str(self.Name))
+        #     self.IP_LE.setText(str(self.IP))
+        #     self.TestPort_LE.setText(str(self.TestPort))
+        # else:
+        #     self.PLC_Status_lbl = ""
+        #     self.PLC_Counter_lbl = ""
+        #     self.lbl_Test = ""
+        #     self.checkBox_Test = ""
+        #     self.checkBox_Counter = ""
+        #     self.Name_LE = ""
+        #     self.IP_LE = ""
+        #     self.TestPort_LE = ""
+
+    def run_thread(self):
+        self.ReadingDataThread.start()
+        Logging.da_log("Init PLC " + self.Name, "PLC " + self.Name + " start")
+
+    def update(self):
+        sea = TinyDB(DADBPath).table(DATableName).get(doc_id=self.DBid)
+        self.Port = sea["Port"]
+        self.TestPort = sea["TestPort"]
+        self.IP = sea["IP"]
+        self.Name = sea["Name"]
+
+        self.client = ModbusClient(host=self.IP, port=self.Port, auto_open=True, auto_close=False,
+                                   timeout=ModbusTimeout, debug=False)
+
+    def disconnect(self):
+        if self.first_bad:
+            try:
+                winsound.Beep(5000, 100)
+                winsound.Beep(4000, 100)
+                winsound.Beep(3000, 100)
+            except Exception as e:
+                pass
+
+            self.Connected = False
+            self.first_good = True
+            self.first_bad = False
+            self.TimeDis = datetime.now()
+            # self.PLC_Status_lbl.setPixmap(self.deleteMark)
+            # self.PLC_Counter_lbl.setStyleSheet("background-color: red;color: white;")
+            # self.checkBox_Test.setEnabled(False)
+            # self.checkBox_Test.setChecked(False)
+            # self.checkBox_Counter.setEnabled(False)
+            # self.checkBox_Counter.setChecked(False)
+
+        # self.PLC_Counter_lbl.setText(str(self.ret_num))
+        self.DiffTime = relativedelta(datetime.now(), self.TimeDis)
+        if getABSecond(self.DiffTime) > DisconnectAlarmTime and (not self.disc_msg_sent):
+            self.disc_msg_sent = True
+            now1 = JalaliDateTime.to_jalali(self.TimeDis).strftime(send_time_format)
+
+            self.MessengerQ.put([PLCDisconnectBaleText.format(Name=self.Name, Time=now1), -1, 0, 1])
+            self.MessengerQ.put([PLCDisconnectBaleText.format(Name=self.Name, Time=now1), -1, 0, 2])
+            Logging.da_log("Disconnected", "PLC " + self.Name + " Disconnected")
+
+    def connect(self):
+        if self.first_good:
+
+            try:
+                winsound.Beep(3000, 100)
+                winsound.Beep(4000, 100)
+                winsound.Beep(5000, 100)
+            except Exception as e:
+                pass
+            if self.disc_msg_sent:
+                now1 = JalaliDateTime.to_jalali(datetime.now()).strftime(send_time_format)
+                self.MessengerQ.put(
+                    [PLCConnectBaleText.format(Name=self.Name, DiffTime=getText(self.DiffTime), Time=now1), -1, 0, 1])
+                self.MessengerQ.put(
+                    [PLCConnectBaleText.format(Name=self.Name, DiffTime=getText(self.DiffTime), Time=now1), -1, 0, 2])
+                Logging.da_log("Connected", "PLC " + self.Name + " Connected")
+
+            print("connected to PLC {} after {}".format(self.Name, getText(self.DiffTime)))
+            self.ret_num = 0
+            # self.PLC_Counter_lbl.setStyleSheet("background-color: rgba(" + GreenColor + ");color: white;")
+            # self.PLC_Counter_lbl.setText(str(self.ret_num))
+            # self.PLC_Status_lbl.setPixmap(self.checkMark)
+            # self.checkBox_Test.setEnabled(True)
+            # self.checkBox_Counter.setEnabled(True)
+
+            self.Connected = True
+            self.first_bad = True
+            self.first_good = False
+            self.disc_msg_sent = False
+
+    def test(self, data):
+        if self.MessengerQ is not None:
+            self.MessengerQ.put([VirtualText.format(Name=self.Name, format=self.TestPort, data=data), -2, 0, 1])
+            self.MessengerQ.put([VirtualText.format(Name=self.Name, format=self.TestPort, data=data), -2, 0, 2])
+        # self.lbl_Test.setText(str(data))
+
+    def counter(self):
+        data = int(self.client.read_holding_registers(RegisterForCounter, 1)[0])
+        if data > 32767:
+            data = data - 65536
+        self.ret_num = data
+        # self.PLC_Counter_lbl.setText(str(self.ret_num))
+
+    def cal_sleep_time(self):
+        dps = self.DPS * 1.2
+        if not (dps * 1.3 > self.RPS > dps):
+            if dps >= self.RPS:
+                self.SleepTime -= PLCSleepTimeStepDown
+            else:
+                self.SleepTime += PLCSleepTimeStepUp
+        if self.SleepTime <= PLCTimeSleepMin:
+            self.SleepTime = PLCTimeSleepMin
+        if self.SleepTime >= PLCTimeSleepMax:
+            self.SleepTime = PLCTimeSleepMax
+        self.SleepTime = round(self.SleepTime, 2)
+
+    def restart_thread(self):
+        if not (self.ReadingDataThread.is_alive()):
+            self.stop_thread = False
+            self.ReadingDataThread = threading.Thread(target=self.thread_func,
+                                                      args=(lambda: self.stop_thread,))
+            self.ReadingDataThread.start()
+            Logging.da_log("Restart PLC " + self.Name, "PLC " + self.Name + " restart")
+
+    def line_monitoring_read_data_from_plc_thread(self, stop_thread):
+        sleep(1)
+        now_sleep = datetime.now()
+        while True:
+            if stop_thread():
+                Logging.da_log("Reading Data Thread " + self.Name, "PLC " + self.Name + " Stop")
+                print("stop PLC " + self.Name)
+                break
+            sleep(self.SleepTime)
+            try:
+                # plc_is_open = self.client.is_open()
+                plc_is_open = self.client.open()
+                if not plc_is_open:
+                    self.ReadCounter = 0
+                    self.DataCounter = 0
+                    self.ret_num += 1
+                    print("PLC " + str(self.Name) + " disconnected! | retry number : " + str(self.ret_num))
+                    self.disconnect()
+
+                if plc_is_open:
+                    self.ReadCounter += 1
+                    if (datetime.now() - now_sleep).seconds >= PLCRefreshTime:
+                        now_sleep = datetime.now()
+                        self.DPS = self.DataCounter
+                        self.RPS = self.ReadCounter
+                        self.ReadCounter = 0
+                        self.DataCounter = 0
+                        # if not self.checkBox_Counter.isChecked():
+                        #     self.PLC_Counter_lbl.setText(str(self.RPS / PLCRefreshTime))
+                        self.cal_sleep_time()
+                    data, choose = self.line_monitoring_read_data_from_plc()
+                    if data is not None:
+                        if data:
+                            self.DataCounter += 1
+                            self.line_monitoring_queue.put([data, choose])
+
+                    self.connect()
+                    # if self.checkBox_Test.isChecked():
+                    #     self.client.write_single_coil(2098, 1)
+                    # else:
+                    #     self.client.write_single_coil(2098, 0)
+                    #
+                    # if self.checkBox_Counter.isChecked():
+                    #     self.SleepTime = 0
+                    #     try:
+                    #         self.Counter()
+                    #     except:
+                    #         pass
+            except Exception as e:
+                Logging.da_log("send and receive " + str(self.DBid), str(e))
+                break
+
+    def line_monitoring_read_data_from_plc(self):
+        self.client.write_single_coil(RegisterForStartRead, True)
+        data = self.client.read_holding_registers(RegisterForData, 1)
+        self.client.write_single_coil(RegisterForEndRead, True)
+        if data is not None:
+            data = int(data[0])
+            if data:
+                choose, data = extract_choose(data)
+                if choose == int(self.TestPort):
+                    self.test(data)
+                    return 0, None
+                return data, choose
+            else:
+                return 0, None
+        else:
+            return None, None
+
+    def electrical_substation_read_data_from_plc_thread(self, stop_thread):
+        sleep(1)
+        now_sleep = datetime.now()
+        while True:
+            if stop_thread():
+                Logging.da_log("Reading Data Thread " + self.Name, "PLC " + self.Name + " Stop")
+                print("stop PLC " + self.Name)
+                break
+            sleep(self.SleepTime)
+            try:
+                # plc_is_open = self.client.is_open()
+                plc_is_open = self.client.open()
+                if not plc_is_open:
+                    self.ReadCounter = 0
+                    self.DataCounter = 0
+                    self.ret_num += 1
+                    print("PLC " + str(self.Name) + " disconnected! | retry number : " + str(self.ret_num))
+                    self.disconnect()
+
+                if plc_is_open:
+                    self.ReadCounter += 1
+                    if (datetime.now() - now_sleep).seconds >= PLCRefreshTime:
+                        now_sleep = datetime.now()
+                        self.DPS = self.DataCounter
+                        self.RPS = self.ReadCounter
+                        self.ReadCounter = 0
+                        self.DataCounter = 0
+                        # if not self.checkBox_Counter.isChecked():
+                        #     self.PLC_Counter_lbl.setText(str(self.RPS / PLCRefreshTime))
+                        self.cal_sleep_time()
+                    data = self.electrical_substation_data_from_plc(3)
+                    if data is not None:
+                        if data:
+                            self.DataCounter += 1
+                            self.electrical_substation_queue.put([data])
+
+                    self.connect()
+                    # if self.checkBox_Test.isChecked():
+                    #     self.client.write_single_coil(2098, 1)
+                    # else:
+                    #     self.client.write_single_coil(2098, 0)
+                    #
+                    # if self.checkBox_Counter.isChecked():
+                    #     self.SleepTime = 0
+                    #     try:
+                    #         self.Counter()
+                    #     except:
+                    #         pass
+            except Exception as e:
+                Logging.da_log("send and receive " + str(self.DBid), str(e))
+                break
+
+    def electrical_substation_data_from_plc(self, rs_485_address):
+        self.client.unit_id(rs_485_address)
+
+        incoming_data_part1 = self.multiple_register_read("holding", 3000, 17, "FLOAT32")
+        incoming_data_part2 = self.multiple_register_read("holding", 3036, 21, "FLOAT32")
+        incoming_data_part3 = self.multiple_register_read("holding", 3078, 8, "4Q_FP_PF")
+        incoming_data_part4 = self.multiple_register_read("holding", 3110, 1, "FLOAT32")
+        incoming_data_part5 = self.multiple_register_read("holding", 3194, 1, "FLOAT32")
+        incoming_data_part6 = self.multiple_register_read("holding", 3204, 12, "INT64")
+        incoming_data_part7 = self.multiple_register_read("holding", 3272, 4, "INT64")
+        incoming_data_part8 = self.multiple_register_read("holding", 3304, 12, "INT64")
+        incoming_data_part9 = self.multiple_register_read("holding", 3518, 9, "INT64")
+
+        try:
+            if incoming_data_part1 is not None:
+                incoming_data = incoming_data_part1 + \
+                                incoming_data_part2 + \
+                                incoming_data_part3 + \
+                                incoming_data_part4 + \
+                                incoming_data_part5 + \
+                                incoming_data_part6 + \
+                                incoming_data_part7 + \
+                                incoming_data_part8 + \
+                                incoming_data_part9
+            else:
+                return None
+
+            dict_data_out = {
+                "Current_A": incoming_data[0],
+                "Current_B": incoming_data[1],
+                "Current_C": incoming_data[2],
+                "Current_N": incoming_data[3],
+                "Current_G": incoming_data[4],
+                "Current_Avg": incoming_data[5],
+
+                "Current_Unbalance_A": incoming_data[6],
+                "Current_Unbalance_B": incoming_data[7],
+                "Current_Unbalance_C": incoming_data[8],
+                "Current_Unbalance_Worst": incoming_data[9],
+
+                "Voltage_A_B": incoming_data[10],
+                "Voltage_B_C": incoming_data[11],
+                "Voltage_C_A": incoming_data[12],
+                "Voltage_L_L_Avg": incoming_data[13],
+                "Voltage_A_N": incoming_data[14],
+                "Voltage_B_N": incoming_data[15],
+                "Voltage_C_N": incoming_data[16],
+                "Voltage_L_N_Avg": incoming_data[17],
+
+                "Voltage_Unbalance_A_B": incoming_data[18],
+                "Voltage_Unbalance_B_C": incoming_data[19],
+                "Voltage_Unbalance_C_A": incoming_data[20],
+                "Voltage_Unbalance_L_L_Worst": incoming_data[21],
+                "Voltage_Unbalance_A_N": incoming_data[22],
+                "Voltage_Unbalance_B_N": incoming_data[23],
+                "Voltage_Unbalance_C_N": incoming_data[24],
+                "Voltage_Unbalance_L_N_Worst": incoming_data[25],
+
+                "Active_Power_A": incoming_data[26],
+                "Active_Power_B": incoming_data[27],
+                "Active_Power_C": incoming_data[28],
+                "Active_Power_Total": incoming_data[29],
+                "Reactive_Power_A": incoming_data[30],
+                "Reactive_Power_B": incoming_data[31],
+                "Reactive_Power_C": incoming_data[32],
+                "Reactive_Power_Total": incoming_data[33],
+                "Apparent_Power_A": incoming_data[34],
+                "Apparent_Power_B": incoming_data[35],
+                "Apparent_Power_C": incoming_data[36],
+                "Apparent_Power_Total": incoming_data[37],
+
+                "Power_Factor_A": incoming_data[38],
+                "Power_Factor_B": incoming_data[39],
+                "Power_Factor_C": incoming_data[40],
+                "Power_Factor_Total": incoming_data[41],
+                "Displacement_Power_Factor_A": incoming_data[42],
+                "Displacement_Power_Factor_B": incoming_data[43],
+                "Displacement_Power_Factor_C": incoming_data[44],
+                "Displacement_Power_Factor_Total": incoming_data[45],
+
+                "Frequency": incoming_data[46],
+
+                "Power_Factor_Total_IEEE": incoming_data[47],
+
+                "Active_Energy_Delivered_Into_Load": incoming_data[48],
+                "Active_Energy_Received_Out_of_Load": incoming_data[49],
+                "Active_Energy_Delivered_Pos_Received": incoming_data[50],
+                "Active_Energy_Delivered_Neg_Received": incoming_data[51],
+                "Reactive_Energy_Delivered": incoming_data[52],
+                "Reactive_Energy_Received": incoming_data[53],
+                "Reactive_Energy_Delivered_Pos_Received": incoming_data[54],
+                "Reactive_Energy_Delivered_Neg_Received": incoming_data[55],
+                "Apparent_Energy_Delivered": incoming_data[56],
+                "Apparent_Energy_Received": incoming_data[57],
+                "Apparent_Energy_Delivered_Pos_Received": incoming_data[58],
+                "Apparent_Energy_Delivered_Neg_Received": incoming_data[59],
+
+                "Reactive_Energy_in_Quadrant_I": incoming_data[60],
+                "Reactive_Energy_in_Quadrant_II": incoming_data[61],
+                "Reactive_Energy_in_Quadrant_III": incoming_data[62],
+                "Reactive_Energy_in_Quadrant_IV": incoming_data[63],
+
+                "Active_Energy_Delivered_Into_Load_Permanent": incoming_data[64],
+                "Active_Energy_Received_Out_of_Load_Permanent": incoming_data[65],
+                "Active_Energy_Delivered_Pos_Received_Permanent": incoming_data[66],
+                "Active_Energy_Delivered_Neg_Received_Permanent": incoming_data[67],
+                "Reactive_Energy_Delivered_Permanent": incoming_data[68],
+                "Reactive_Energy_Received_Permanent": incoming_data[69],
+                "Reactive_Energy_Delivered_Pos_Received_Permanent": incoming_data[70],
+                "Reactive_Energy_Delivered_Neg_Received_Permanent": incoming_data[71],
+                "Apparent_Energy_Delivered_Permanent": incoming_data[72],
+                "Apparent_Energy_Received_Permanent": incoming_data[73],
+                "Apparent_Energy_Delivered_Pos_Received_Permanent": incoming_data[74],
+                "Apparent_Energy_Delivered_Neg_Received_Permanent": incoming_data[75],
+
+                "Active_Energy_Delivered_Phase_A": incoming_data[76],
+                "Active_Energy_Delivered_Phase_B": incoming_data[77],
+                "Active_Energy_Delivered_Phase_C": incoming_data[78],
+                "Reactive_Energy_Delivered_Phase_A": incoming_data[79],
+                "Reactive_Energy_Delivered_Phase_B": incoming_data[80],
+                "Reactive_Energy_Delivered_Phase_C": incoming_data[81],
+                "Apparent_Energy_Delivered_Phase_A": incoming_data[82],
+                "Apparent_Energy_Delivered_Phase_B": incoming_data[83],
+                "Apparent_Energy_Delivered_Phase_C": incoming_data[84]
+            }
+
+            json_data_out = json.dumps(dict_data_out, indent=2)
+
+            return json_data_out
+
+        except:
+            print("Error in Read Data From PM2100")
+
+    def single_register_read(self, _input_or_holding, _address, _data_type, _big_endian=False):
+        if _data_type == "32bit_float":
+            if _input_or_holding == "input":
+                data = self.client.read_input_registers(_address, 2)
+            if _input_or_holding == "holding":
+                data = self.client.read_holding_registers(_address, 2)
+            if data:
+                list_32_bits = utils.word_list_to_long(data, big_endian=_big_endian)
+                float_32bit_val = round(utils.decode_ieee(list_32_bits[0]), 2)
+
+                return float_32bit_val
+
+        if _data_type == "16bit_uint":
+            if _input_or_holding == "input":
+                data = self.client.read_input_registers(_address, 1)
+            if _input_or_holding == "holding":
+                data = self.client.read_holding_registers(_address, 1)
+
+            if data:
+                uint_16bit_val = data[0]
+
+                return uint_16bit_val
+
+    def multiple_register_read(self, _input_or_holding, _address, _length, _data_type, _big_endian=False):
+        if _data_type == "FLOAT32":
+            list_float_32bit = []
+            if _input_or_holding == "input":
+                data = self.client.read_input_registers(_address, 2 * _length)
+            if _input_or_holding == "holding":
+                data = self.client.read_holding_registers(_address, 2 * _length)
+            if data:
+                list_32_bits = utils.word_list_to_long(data, big_endian=_big_endian)
+                for val in list_32_bits:
+                    list_float_32bit.append(round(utils.decode_ieee(val), 2))
+
+                return list_float_32bit
+
+        if _data_type == "INT16":
+            if _input_or_holding == "input":
+                data = self.client.read_input_registers(_address, _length)
+            if _input_or_holding == "holding":
+                data = self.client.read_holding_registers(_address, _length)
+            if data:
+                list_uint_16bit = data
+
+                return list_uint_16bit
+
+        if _data_type == "4Q_FP_PF":
+            list_4Q_FP_PF = []
+            if _input_or_holding == "input":
+                data = self.client.read_input_registers(_address, _length * 2)
+            if _input_or_holding == "holding":
+                data = self.client.read_holding_registers(_address, _length * 2)
+            if data:
+                list_32_bits = utils.word_list_to_long(data, big_endian=_big_endian)
+                for val in list_32_bits:
+                    list_4Q_FP_PF.append(round(utils.decode_ieee(val), 2))
+
+                return list_4Q_FP_PF
+
+        if _data_type == "INT64":
+            list_INT64 = []
+            if _input_or_holding == "input":
+                data = self.client.read_input_registers(_address, _length * 4)
+            if _input_or_holding == "holding":
+                data = self.client.read_holding_registers(_address, _length * 4)
+            if data:
+                while len(data) >= 4:
+                    this_INT64 = (data[0:4][3] << 16 * 3) + (data[0:4][2] << 16 * 2) + (data[0:4][1] << 16 * 1) + \
+                                 data[0:4][
+                                     0]
+                    list_INT64.append(this_INT64)
+                    del data[0:4]
+
+                return list_INT64
+
+    def read_on_timer(self):
+        self.client.unit_id(13)
+        a = self.multiple_register_read("input", 1, 1, "INT64")
+        if a:
+            if a[0]:
+                sec = a[0] / 1000
+                minute = sec / 60
+                hour = minute / 60
+
+                print("sec = ", round(sec, 1), " | ", "min = ", round(minute, 1), " | ", "hour = ", round(hour, 1))
+                return sec, minute, hour
+
+        return -1, -1, -1
+
+    def read_on_board_sensors(self):
+        self.client.unit_id(13)
+        a = self.multiple_register_read("input", 1000, 1, "INT16")
+        if a:
+            if a[0]:
+                # print(a[0])
+                return a[0]
+
+        return -1
+
+    def read_temperature(self):
+        self.client.unit_id(13)
+        a = self.multiple_register_read("input", 5, 1, "FLOAT32")
+        if a:
+            if a[0]:
+                # print(a[0])
+                return a[0]
+
+        return -1

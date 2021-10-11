@@ -1,0 +1,18 @@
+{Name} گرامی ثبت نام شما با آی دی {id} با موفقیت انجام شد.
+{Name} گرامی مشخصات شما با آی دی {id} قبلا در سیستم ثبت شده است.
+فرستادن اطلاعات برای شما فعال شد
+فرستادن اطلاعات برای شما غیر فعال شد
+مشکلی در سیستم است
+پیام شما برای ادمین فرستاده شد
+Waiting for Sending Export
+Waiting for Sending Help
+Waiting for Creating PDF Export
+Waiting for Creating CSV Export
+شما در سامانه ثبت نشده اید
+دسترسی شما به سامانه مسدود شده است
+Person with id : {id} and Name : {Name} has Access {Access}
+Phone Created
+تولیدات واحد {Name} فاز {Phase} با کاشی {Tile} : {counter}
+واحد {Name} فاز {Phase} : {Active}
+دسترسی شما در سامانه فعال شد
+دسترسی شما در سامانه غیرفعال شد

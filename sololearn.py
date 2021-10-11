@@ -1,0 +1,2 @@
+class MirielleError(BaseException):
+    pass
