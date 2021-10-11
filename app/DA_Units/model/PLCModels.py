@@ -345,6 +345,7 @@ class PLCModel:
                         # if not self.checkBox_Counter.isChecked():
                         #     self.PLC_Counter_lbl.setText(str(self.RPS / PLCRefreshTime))
                         self.cal_sleep_time()
+                    print("miad inja")
                     data = self.electrical_substation_data_from_plc(3)
                     if data is not None:
                         if data:

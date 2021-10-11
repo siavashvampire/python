@@ -172,7 +172,10 @@ class Sensor:
         key = sorted(list(data_temp_activity.keys()), key=self.key_order_activity)
 
         data_temp_activity[key[0]] = self.sensor_id  # for switch id
-        data_temp_activity[key[1]] = value  # for active
+        if value:
+            data_temp_activity[key[1]] = 1  # for active
+        else:
+            data_temp_activity[key[1]] = 0  # for active
         data_temp_activity[key[2]] = self.Tile_Kind  # for Tile_Kind
         data_temp_activity[key[3]] = time  # for time
         return data_temp_activity

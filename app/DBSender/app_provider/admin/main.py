@@ -129,8 +129,6 @@ class DataArchive:
                 headers = {'cache-control': "no-cache",
                            'content-type': "multipart/form-data; boundary=" + boundaryForPayload}
                 status, r = site_connection(url, SendTimeout, data=payload, header=headers)
-                print(url)
-                print(status)
                 print(r)
                 good, index, error = send_data(r, status)
                 # self.insertFlag = RH(r, status)

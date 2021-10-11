@@ -64,6 +64,10 @@ class CamSwitch:
 
         data_temp[key[0]] = self.Switch_id  # for switch id
         data_temp[key[1]] = value  # for active
+        if value:
+            data_temp[key[1]] = 1  # for active
+        else:
+            data_temp[key[1]] = 0  # for active
         data_temp[key[2]] = time  # for time
         return data_temp
 

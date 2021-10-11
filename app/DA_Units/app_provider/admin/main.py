@@ -19,7 +19,7 @@ class DAUnits:
         self.units = []
         self.state = False
         self.stop_check = False
-        self.update_system()
+        # self.update_system()
         # TODO:update system bayad baresh darim
         self.create_units()
 

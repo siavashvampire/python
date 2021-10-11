@@ -99,7 +99,7 @@ def send_data(r, status):
     elif status == 400:
         r = r["message"]
         index = r["indexOfProblem"]
-        error = r["error"]
+        error = r["result"]
         if index == 0:
             good = False
         else:
