@@ -3,7 +3,7 @@ from datetime import datetime
 from tinydb import TinyDB, Query
 
 from core.config.Config import SwitchDBPath, OFFCamSwitchValue, ONCamSwitchValue, time_format, switch_table_name
-from core.model.DataType import switch_activity_app_name, switch_activity_data
+from core.model.DataType import switch_activity_data, switch_activity_app, switch_activity_class, switch_activity_method
 
 
 def find_switch_choose(choose, switches):
@@ -37,7 +37,9 @@ class CamSwitch:
             value = 1
 
         self.SenderQ.put(
-            {"app": switch_activity_app_name,
+            {"app": switch_activity_app,
+             "class": switch_activity_class,
+             "method": switch_activity_method,
              "data": self.get_data(value, datetime.now().strftime(time_format))})
         self.Active = value
         return bale_report_flag, sms_report_flag

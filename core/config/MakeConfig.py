@@ -213,12 +213,12 @@ ConfigDB.update({"switch_table_name": str(switch_table_name)})
 
 # Start  URL Config
 if devCon:
-    Main_URL = "http://localhost/Hafez/Monitoring_Tile/"
+    Main_URL = "http://192.168.1.8/Hafez/Monitoring_Tile/"
 else:
     Main_URL = "http://localhost/"
 GetSensorURL = "api/get/sensor"
 GetSwitchURL = "api/get/camSwitch"
-Get_DAUnit_URL = "api/da_unit"
+Get_DAUnit_URL = "api/DAUnits"
 get_phones_url = "api/phones"
 get_sms_phones_url = "api/phones"
 GetadminDayURL = "api/get/adminDayCounter"
@@ -232,7 +232,7 @@ GetCheckURL = "api/get/Check"
 UserURL = "api/user/generateUser"
 ActiveURL = "api/chageStatus"
 SwitchURL = "api/chageStatus/camSwitch"
-DefaultLogURL = "api/newLog"
+DefaultLogURL = "api/multi_call"
 ExportURL = "api/export/"
 CronMergeURL = "api/cronjob/mergeData"
 CronShiftURL = "api/cronjob/updateShift"

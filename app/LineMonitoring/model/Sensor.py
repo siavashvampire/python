@@ -4,8 +4,8 @@ from tinydb import TinyDB, Query
 
 import app.LineMonitoring.app_provider.api.LastLog as LastLog
 from core.config.Config import SensorDBPath, time_format, sensor_table_name
-from core.model.DataType import sensor_new_log_app_name, sensor_new_log_data, sensor_activity_app_name, \
-    sensor_activity_data
+from core.model.DataType import sensor_new_log_data, sensor_activity_data, sensor_activity_app, \
+    sensor_activity_class, sensor_activity_method, sensor_new_log_app, sensor_new_log_class, sensor_new_log_method
 
 
 def find_sensor_choose(choose, sensors):
@@ -67,7 +67,9 @@ class Sensor:
         now = datetime.now().strftime(time_format)
 
         self.SenderQ.put(
-            {"app": sensor_new_log_app_name,
+            {"app": sensor_new_log_app,
+             "class": sensor_new_log_class,
+             "method": sensor_new_log_method,
              "data": self.get_data(value, datetime.now().strftime(time_format))})
 
         if self.OffTime:
@@ -114,7 +116,9 @@ class Sensor:
 
     def send_activity(self, value, time=None):
         self.SenderQ.put(
-            {"app": sensor_activity_app_name,
+            {"app": sensor_activity_app,
+             "class": sensor_activity_class,
+             "method": sensor_activity_method,
              "data": self.get_data_activity(value, time)})
         self.Active = value
         if not self.lbl_Data_Name == "":

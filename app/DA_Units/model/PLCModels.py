@@ -50,18 +50,18 @@ def get_plc(ui):
     plc_db.drop_tables()
     plc_db.close()
     plc_db = TinyDB(DADBPath).table('DAUnits')
-    for i in range(4):
-        if str(ui.lineEdit_Name[i].text()) is not "":
-            name = str(ui.lineEdit_Name[i].text())
-            if str(ui.lineEdit_TestPort[i].text()) is not "":
-                test_port = int(ui.lineEdit_TestPort[i].text())
-            else:
-                test_port = 0
-            if str(ui.lineEdit_IP[i].text()) is not "":
-                ip = str(ui.lineEdit_IP[i].text())
-            else:
-                ip = "192.168.1.240"
-            plc_db.insert({'Name': str(name), 'IP': str(ip), 'Port': str("502"), 'TestPort': str(test_port)})
+    # for i in range(4):
+    #     if str(ui.lineEdit_Name[i].text()) is not "":
+    #         name = str(ui.lineEdit_Name[i].text())
+    #         if str(ui.lineEdit_TestPort[i].text()) is not "":
+    #             test_port = int(ui.lineEdit_TestPort[i].text())
+    #         else:
+    #             test_port = 0
+    #         if str(ui.lineEdit_IP[i].text()) is not "":
+    #             ip = str(ui.lineEdit_IP[i].text())
+    #         else:
+    #             ip = "192.168.1.240"
+    #         plc_db.insert({'Name': str(name), 'IP': str(ip), 'Port': str("502"), 'TestPort': str(test_port)})
 
 
 def extract_choose(data):
@@ -72,7 +72,7 @@ def extract_choose(data):
 
 class PLCModel:
     def __init__(self, db_id=0, ip="192.168.1.240", port=502, name="", test_port=0, messenger_queue=None,
-                 app_name="electrical_substation",
+                 app_name="Mersad Monitoring System",
                  line_monitoring_queue=None,
                  electrical_substation_queue=None):
         from core.theme.pic import Pics
@@ -97,9 +97,9 @@ class PLCModel:
         self.RPS = 0
         self.TimeDis = False
         self.DiffTime = False
-        if self.app_name == "line_monitoring":
+        if self.app_name == "Mersad Monitoring System":
             self.thread_func = self.line_monitoring_read_data_from_plc_thread
-        elif self.app_name == "electrical_substation":
+        elif self.app_name == "Electrical Substation":
             self.thread_func = self.line_monitoring_read_data_from_plc_thread
         if messenger_queue is not None:
             self.MessengerQ = messenger_queue
@@ -143,10 +143,11 @@ class PLCModel:
 
     def update(self):
         sea = TinyDB(DADBPath).table(DATableName).get(doc_id=self.DBid)
-        self.Port = sea["Port"]
-        self.TestPort = sea["TestPort"]
+        self.Port = 502
+        self.TestPort = sea["testPort"]
+        self.app = sea["app"]
         self.IP = sea["IP"]
-        self.Name = sea["Name"]
+        self.Name = sea["label"]
 
         self.client = ModbusClient(host=self.IP, port=self.Port, auto_open=True, auto_close=False,
                                    timeout=ModbusTimeout, debug=False)

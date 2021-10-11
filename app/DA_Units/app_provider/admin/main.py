@@ -9,23 +9,26 @@ from core.theme.pic import Pics
 
 
 class DAUnits:
-    def __init__(self, messenger_q, data_sender_q, thread_label):
+    def __init__(self, messenger_q, line_monitoring_queue, electrical_substation_queue, thread_label):
         self.thread_label = thread_label
         self.should_stop = False
         self.plc_db = TinyDB(DADBPath).table(DATableName)
         self.messenger_q = messenger_q
-        self.data_sender_q = data_sender_q
+        self.line_monitoring_queue = line_monitoring_queue
+        self.electrical_substation_queue = electrical_substation_queue
         self.units = []
         self.state = False
         self.stop_check = False
+        self.update_system()
         self.create_units()
 
     def create_units(self):
         if len(self.plc_db):
-
+            self.units = []
             for i in self.plc_db.all():
                 self.units.append(PLCModel(db_id=i.doc_id, messenger_queue=self.messenger_q,
-                                           line_monitoring_queue=self.data_sender_q))
+                                           line_monitoring_queue=self.line_monitoring_queue),
+                                  electrical_substation_queue=self.electrical_substation_queue)
             # self.units = [
             #     PLCModel(db_id=i.doc_id, messenger_queue=self.messenger_q, line_monitoring_queue=self.data_sender_q) for
             #     i in self.plc_db.all()]
@@ -113,6 +116,7 @@ class DAUnits:
 
     @staticmethod
     def read_all_units():
+        print(Main_Get_DAUnit_URL)
         get_from_site_db(get_url=Main_Get_DAUnit_URL, get_timeout=DAUnitsGetTimeout, db_path=DADBPath,
                          table_name=DATableName)
 

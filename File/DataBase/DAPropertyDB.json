@@ -1,1 +1,1 @@
-{"DAUnits": {"1": {"Name": "test", "IP": "192.168.1.239", "Port": "502", "TestPort": "0"}}}
+{"DAUnits": {"1": {"id": 1, "label": "test2", "IP": "192.168.1.240", "type": "PLC_delta_DVP_12SE", "testPort": 0, "app": "Mersad Monitoring System"}, "2": {"id": 2, "label": "test3", "IP": "192.168.1.239", "type": "MERSAD_GATEWAY", "testPort": 0, "app": "Electrical Substation"}}}
