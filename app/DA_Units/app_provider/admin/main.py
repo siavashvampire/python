@@ -20,28 +20,30 @@ class DAUnits:
         self.state = False
         self.stop_check = False
         self.update_system()
+        # TODO:update system bayad baresh darim
         self.create_units()
 
     def create_units(self):
         if len(self.plc_db):
             self.units = []
             for i in self.plc_db.all():
-                self.units.append(PLCModel(db_id=i.doc_id, messenger_queue=self.messenger_q,
-                                           line_monitoring_queue=self.line_monitoring_queue),
-                                  electrical_substation_queue=self.electrical_substation_queue)
-            # self.units = [
-            #     PLCModel(db_id=i.doc_id, messenger_queue=self.messenger_q, line_monitoring_queue=self.data_sender_q) for
-            #     i in self.plc_db.all()]
+                self.units.append(PLCModel(db_id=i.doc_id,
+                                           messenger_queue=self.messenger_q,
+                                           line_monitoring_queue=self.line_monitoring_queue,
+                                           electrical_substation_queue=self.electrical_substation_queue))
+                # self.units = [
+                #     PLCModel(db_id=i.doc_id, messenger_queue=self.messenger_q, line_monitoring_queue=self.data_sender_q) for
+                #     i in self.plc_db.all()]
 
-            # for i in self.plc_db.all():
-            #     self.units.append(True)
+                # for i in self.plc_db.all():
+                #     self.units.append(True)
 
-            # TODO:bayad joda she bayad jaye all bashe onaie k fght PLC hastan v onaie k fght gateway hastan
-            print("PLCsDB Created!")
-            for plc in self.units:
-                plc.run_thread()
-        else:
-            self.units = []
+                # TODO:bayad joda she bayad jaye all bashe onaie k fght PLC hastan v onaie k fght gateway hastan
+                print("PLCsDB Created!")
+                for plc in self.units:
+                    plc.run_thread()
+                else:
+                    self.units = []
 
     def check_da_status(self):
         connect_da = True
