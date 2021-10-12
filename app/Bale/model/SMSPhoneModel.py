@@ -4,7 +4,7 @@ from core.config.Config import SMSusername, SMSpassword, SMSPhone, PhoneTimeout,
 
 
 class SMSPhoneData:
-    def __init__(self, name="", phone=0, units=[0], phase=[0], access=0):
+    def __init__(self, name, phone, units, phase, access=0):
         self.Name = str(name)
         self.Phone = int(phone)
         self.Units = units
@@ -13,16 +13,16 @@ class SMSPhoneData:
 
     def check_id(self, id):
         if id > 0:
-            if 0 in self.Units:
+            if -4 in self.Units:
                 return True
         if id in self.Units:
             return True
         return False
 
     def check_phase(self, phase):
-        if phase == 0:
+        if phase == -4:
             return True
-        if 0 in self.phase:
+        if -4 in self.phase:
             return True
         if phase in self.phase:
             return True

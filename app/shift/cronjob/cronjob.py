@@ -28,8 +28,8 @@ class Cronjob:
 
                     if isDayUpdated():
                         day_count = adminDayCounter()
-                        self.messenger_queue.TextQ.put([day_count, -3, 0, 1])
-                        self.messenger_queue.TextQ.put([day_count, -3, 0, 2])
+                        self.messenger_queue.TextQ.put([day_count, -3, -4, 1])
+                        self.messenger_queue.TextQ.put([day_count, -3, -4, 2])
                     self.sender_state_func(state=True, program=True)
                     self.last_check = datetime.now()
             except Exception as e:

@@ -47,6 +47,7 @@ RegisterForStartRead = 2088
 RegisterForEndRead = 2089
 RegisterForData = 4100
 RegisterForCounter = 6099
+RegisterForTest = 2098
 if devCon:
     DisconnectAlarmTime = 5 * 60
 else:
@@ -61,6 +62,7 @@ ConfigDB.update({"RegisterForStartRead": str(RegisterForStartRead)})
 ConfigDB.update({"RegisterForEndRead": str(RegisterForEndRead)})
 ConfigDB.update({"RegisterForData": str(RegisterForData)})
 ConfigDB.update({"RegisterForCounter": str(RegisterForCounter)})
+ConfigDB.update({"RegisterForTest": str(RegisterForTest)})
 ConfigDB.update({"DisconnectAlarmTime": str(DisconnectAlarmTime)})
 ConfigDB.update({"PLCTimeSleepMax": str(PLCTimeSleepMax)})
 ConfigDB.update({"PLCTimeSleepMin": str(PLCTimeSleepMin)})

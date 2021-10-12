@@ -1,8 +1,8 @@
 import json
 import threading
-from time import sleep
 from datetime import datetime
 from queue import Queue
+from time import sleep
 
 from tinydb import TinyDB, table
 
@@ -117,6 +117,7 @@ class DataArchive:
 
     def send_data(self, data):
         if type(data) == list:
+            # TODO:aval check konim k age 1 dade bashe type mitone motefavet bashad ya na baad motmaen shim 1 dade ham dorost mifreste
             payload = data
 
             url = MainDefaultLogURL

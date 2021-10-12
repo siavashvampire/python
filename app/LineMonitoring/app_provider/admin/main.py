@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
-from queue import Queue
 from threading import Thread
+from time import sleep
 
 from persiantools.jdatetime import JalaliDateTime
 from tinydb import TinyDB
@@ -25,7 +25,6 @@ class LineMonitoring:
         self.stop_check = False
         self.should_stop = False
         self.thread_label = thread_label
-        self.DataQ = Queue()
         self.messenger_queue = messenger_queue
 
         self.mergeData = Cronjob(sender_state_func=sender_state_func)
@@ -45,18 +44,7 @@ class LineMonitoring:
     def line_monitoring(self, stop_thread):
         now = datetime.now()
         while True:
-            try:
-                data = self.DataQ.get(timeout=5)
-                self.DataQ.task_done()
-
-                if data:
-                    self.RDThread.DataQ.put(data)
-                else:
-                    if stop_thread():
-                        Logging.line_monitoring_log("Main Rendering Thread", "Stop")
-                        break
-            except:
-                pass
+            sleep(5)
             if (datetime.now() - now).seconds > SensorONOFFTime:
                 now = datetime.now()
                 for s in self.sensors:
@@ -86,6 +74,10 @@ class LineMonitoring:
                                         off_sensor_sms_text = str(s.Name) + " فاز " + str(s.Phase) + str(
                                             now_te.strftime(' در %y/%m/%d ساعت %H:%M:%S')) + " خاموش شده است"
                                         self.messenger_queue.put([off_sensor_sms_text, s.unitId, s.Phase, 2])
+
+            if stop_thread():
+                Logging.line_monitoring_log("Main Rendering Thread", "Stop")
+                break
 
     def restart_thread(self):
         if not (self.Thread.is_alive()):
@@ -161,7 +153,6 @@ class LineMonitoring:
 
     def stop_func(self):
         self.stop_thread = True
-        self.DataQ.put(0)
         self.Thread.join()
         self.RDThread.stop_thread = True
         self.RDThread.DataQ.put([0, None])

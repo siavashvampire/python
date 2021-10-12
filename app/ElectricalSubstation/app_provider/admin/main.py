@@ -6,10 +6,7 @@ from persiantools.jdatetime import JalaliDateTime
 from tinydb import TinyDB
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
-from app.LineMonitoring.cronjob.cronjob import Cronjob
-from app.LineMonitoring.model.CamSwitch import CamSwitch
-from app.LineMonitoring.model.Sensor import Sensor
-from app.LineMonitoring.render.render import RenderingDataThread
+from app.ElectricalSubstation.render.render import RenderingDataThread
 from core.app_provider.api.get import get_from_site_db
 from core.config.Config import MainGetSensorURL, SensorGetTimeout, SensorDBPath, SensorONOFFTime, time_format, \
     sensor_table_name, switch_table_name
@@ -26,18 +23,17 @@ class ElectricalSubstation:
         self.should_stop = False
         self.thread_label = thread_label
         self.DataQ = Queue()
-        self.messenger_queue = messenger_queue
+        # self.messenger_queue = messenger_queue
 
-        self.mergeData = Cronjob(sender_state_func=sender_state_func)
+        # self.mergeData = Cronjob(sender_state_func=sender_state_func)
         self.ArchiveQ = sender_queue
-        self.create_sensors()
+        # self.create_sensors()
         self.stop_thread = False
         self.Thread = Thread(target=self.electrical_substation,
                              args=(lambda: self.stop_thread,))
         self.Thread.start()
         self.RDThread = RenderingDataThread(sensor=self.sensors,
                                             switch=self.switch,
-                                            messenger_queue=self.messenger_queue,
                                             ui=self.ui)
 
     def electrical_substation(self, stop_thread):

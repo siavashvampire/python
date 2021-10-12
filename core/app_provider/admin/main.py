@@ -81,7 +81,7 @@ class Main:
         self.start_splash.show_message("initializing DA units system")
         self.da_units = DAUnits(thread_label=self.main_ui.Threads.ThS_PLC,
                                 messenger_q=self.bale_org.TextQ,
-                                line_monitoring_queue=self.line_monitoring.DataQ,
+                                line_monitoring_queue=self.line_monitoring.RDThread.DataQ,
                                 electrical_substation_queue=None)
 
         self.update_controller = UpdateController(self.line_monitoring.update_system,

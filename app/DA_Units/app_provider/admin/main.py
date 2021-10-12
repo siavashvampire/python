@@ -1,8 +1,7 @@
-from tinydb import TinyDB
+from tinydb import TinyDB, where, Query
 
-from app.DA_Units.model.PLCModels import PLCModel
+from app.DA_Units.model.PLCModels import Delta12SE, GateWay
 from app.DA_Units.model.PLCModels import clear_plc_ui
-from app.DA_Units.model.PLCModels import get_plc
 from core.app_provider.api.get import get_from_site_db
 from core.config.Config import DADBPath, DAUnitsGetTimeout, Main_Get_DAUnit_URL, DATableName
 from core.theme.pic import Pics
@@ -26,17 +25,17 @@ class DAUnits:
     def create_units(self):
         if len(self.plc_db):
             self.units = []
-            for i in self.plc_db.all():
-                self.units.append(PLCModel(db_id=i.doc_id,
-                                           messenger_queue=self.messenger_q,
-                                           line_monitoring_queue=self.line_monitoring_queue,
-                                           electrical_substation_queue=self.electrical_substation_queue))
-                # self.units = [
-                #     PLCModel(db_id=i.doc_id, messenger_queue=self.messenger_q, line_monitoring_queue=self.data_sender_q) for
-                #     i in self.plc_db.all()]
+            for i in self.plc_db.search(Query().type ==  "PLC_delta_DVP_12SE"):
+                self.units.append(Delta12SE(db_id=i.doc_id,
+                                            messenger_queue=self.messenger_q,
+                                            line_monitoring_queue=self.line_monitoring_queue,
+                                            electrical_substation_queue=self.electrical_substation_queue))
 
-                # for i in self.plc_db.all():
-                #     self.units.append(True)
+                for j in self.plc_db.search(Query().type == "MERSAD_GATEWAY"):
+                    self.units.append(GateWay(db_id=j.doc_id,
+                                              messenger_queue=self.messenger_q,
+                                              line_monitoring_queue=self.line_monitoring_queue,
+                                              electrical_substation_queue=self.electrical_substation_queue))
 
                 # TODO:bayad joda she bayad jaye all bashe onaie k fght PLC hastan v onaie k fght gateway hastan
                 print("PLCsDB Created!")
@@ -112,7 +111,6 @@ class DAUnits:
             plc.stop_thread = True
         for plc in self.units:
             plc.ReadingDataThread.join()
-        get_plc(self)
         clear_plc_ui(self)
         self.create_units()
 

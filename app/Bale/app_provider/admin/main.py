@@ -509,7 +509,7 @@ class BaleMain:
                 return
             else:
                 update.message.reply_text(CheckingText)
-                self.TextQ.put([str(id_temp) + " : " + update.message.text, -2, 0, 1])
+                self.TextQ.put([str(id_temp) + " : " + update.message.text, -2, -4, 1])
         elif type(acc) == str:
             update.message.reply_text(acc)
 

@@ -1,10 +1,10 @@
 from tinydb import TinyDB, Query
 
-from core.config.Config import PhoneDBPath
+from core.config.Config import PhoneDBPath, phone_table_name
 
 
 class PhoneData:
-    def __init__(self, name="", id_in=0, send_on_off=0, units=None, phase=None, access=0):
+    def __init__(self, name, id_in, send_on_off, units, phase, access=0):
         self.Name = str(name)
         self.id = int(id_in)
         self.SendONOFF = int(send_on_off)
@@ -20,23 +20,23 @@ class PhoneData:
 
     def check_id(self, id_temp):
         if id_temp > 0:
-            if 0 in self.Units:
+            if -4 in self.Units:
                 return True
         if id_temp in self.Units:
             return True
         return False
 
     def check_phase(self, phase):
-        if phase == 0:
+        if phase == -4:
             return True
-        if 0 in self.phase:
+        if -4 in self.phase:
             return True
         if phase in self.phase:
             return True
         return False
 
     def get_abs_unit_id(self):
-        if 0 in self.Units:
+        if -4 in self.Units:
             return True
         return [i for i in self.Units if i >= 1]
 
@@ -62,7 +62,7 @@ class PhoneData:
         phone_db.update({'Access': value}, phone_prop.id == self.id)
 
     def get_phase(self):
-        if 0 in self.phase:
+        if -4 in self.phase:
             return True
         else:
             return self.phase
