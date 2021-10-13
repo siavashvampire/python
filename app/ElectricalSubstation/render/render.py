@@ -5,8 +5,9 @@ import app.Logging.app_provider.admin.MersadLogging as Logging
 
 
 class RenderingDataThread:
-    def __init__(self,  messenger_queue=None,  ui=None):
+    def __init__(self, device,  messenger_queue=None,  ui=None):
         self.ui = ui
+        self.device = device
         self.messenger_queue = messenger_queue
         self.DataQ = Queue()
         self.stop_thread = False
@@ -19,7 +20,7 @@ class RenderingDataThread:
             data = self.DataQ.get()
             self.DataQ.task_done()
             if data:
-
+                print(data)
             else:
                 if stop_thread():
                     Logging.line_monitoring_log("Main Rendering Thread", "Stop")
@@ -31,4 +32,4 @@ class RenderingDataThread:
             self.stop_thread = False
             self.Thread = Thread(target=self.rendering_data, args=(lambda: self.stop_thread,))
             self.Thread.start()
-            Logging.line_monitoring_log("Restart Render", "Start")
+            Logging.electrical_log("Restart Render", "Start")

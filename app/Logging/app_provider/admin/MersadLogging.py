@@ -8,6 +8,7 @@ LoggingDB = TinyDB(LoggingDBPath)
 Main = LoggingDB.table('Main')
 PLC = LoggingDB.table('DA')
 Render = LoggingDB.table('LineMonitoring')
+electrical = LoggingDB.table('LineMonitoring')
 Bale = LoggingDB.table('Bale')
 Sender = LoggingDB.table('Sender')
 
@@ -26,6 +27,10 @@ def da_log(location, result):
 
 def line_monitoring_log(location, result):
     Render.insert(write_type(location, result))
+
+
+def electrical_log(location, result):
+    electrical.insert(write_type(location, result))
 
 
 def bale_log(location, result):

@@ -192,8 +192,10 @@ SenderTableName = 'Data_Archive'
 LogDBName = 'DataLogDB.json'
 SensorDBName = 'SensorPropertyDB.json'
 sensor_table_name = 'Sensor'
-SwitchDBPath = 'SensorPropertyDB.json'
+SwitchDBName = 'SensorPropertyDB.json'
 switch_table_name = 'Switch'
+DeviceDBName = 'SensorPropertyDB.json'
+device_table_name = 'Switch'
 
 ConfigDB.update({"DBPath": str(DBPath)})
 ConfigDB.update({"LoggingDBName": str(LoggingDBName)})
@@ -209,8 +211,10 @@ ConfigDB.update({"SenderTableName": str(SenderTableName)})
 ConfigDB.update({"LogDBName": str(LogDBName)})
 ConfigDB.update({"SensorDBName": str(SensorDBName)})
 ConfigDB.update({"sensor_table_name": str(sensor_table_name)})
-ConfigDB.update({"SwitchDBPath": str(SwitchDBPath)})
+ConfigDB.update({"SwitchDBName": str(SwitchDBName)})
 ConfigDB.update({"switch_table_name": str(switch_table_name)})
+ConfigDB.update({"DeviceDBName": str(DeviceDBName)})
+ConfigDB.update({"device_table_name": str(device_table_name)})
 # end  LocalDB Config
 
 # Start  URL Config
@@ -220,6 +224,7 @@ else:
     Main_URL = "http://localhost/"
 GetSensorURL = "api/get/sensor"
 GetSwitchURL = "api/get/camSwitch"
+GetDeviceURL = "api/electrical/device"
 Get_DAUnit_URL = "api/DAUnits"
 get_phones_url = "api/phones"
 get_sms_phones_url = "api/phones"

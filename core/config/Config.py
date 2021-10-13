@@ -115,8 +115,10 @@ SenderTableName = sAll["SenderTableName"]
 LogDBName = sAll["LogDBName"]
 SensorDBName = sAll["SensorDBName"]
 sensor_table_name = sAll["sensor_table_name"]
-SwitchDBName = sAll["SwitchDBPath"]
+SwitchDBName = sAll["SwitchDBName"]
 switch_table_name = sAll["switch_table_name"]
+DeviceDBName = sAll["DeviceDBName"]
+device_table_name = sAll["device_table_name"]
 
 LoggingDBPath = resource_path(DBPath + LoggingDBName)
 PhoneDBPath = resource_path(DBPath + PhoneDBName)
@@ -127,12 +129,14 @@ DADBPath = resource_path(DBPath + DADBName)
 LogDBPath = resource_path(DBPath + LogDBName)
 SensorDBPath = resource_path(DBPath + SensorDBName)
 SwitchDBPath = resource_path(DBPath + SwitchDBName)
+DeviceDBPath = resource_path(DBPath + DeviceDBName)
 # end  LocalDB Config
 
 # Start  URL Config
 Main_URL = sAll["Main_URL"]
 GetSensorURL = sAll["GetSensorURL"]
 GetSwitchURL = sAll["GetSwitchURL"]
+GetDeviceURL = sAll["GetDeviceURL"]
 Get_DAUnit_URL = sAll["Get_DAUnit_URL"]
 get_phones_url = sAll["get_phones_url"]
 get_sms_phones_url = sAll["get_sms_phones_url"]
@@ -156,6 +160,7 @@ SMSPhoneURL = sAll["SMSPhoneURL"]
 
 MainGetSensorURL = Main_URL + GetSensorURL
 MainGetSwitchURL = Main_URL + GetSwitchURL
+MainGetDeviceURL = Main_URL + GetDeviceURL
 Main_Get_DAUnit_URL = Main_URL + Get_DAUnit_URL
 main_get_phones_url = Main_URL + get_phones_url
 MainGetadminDayURL = Main_URL + GetadminDayURL

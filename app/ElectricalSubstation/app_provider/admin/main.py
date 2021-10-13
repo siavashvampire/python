@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from queue import Queue
 from threading import Thread
+from typing import List, Any
 
 from persiantools.jdatetime import JalaliDateTime
 from tinydb import TinyDB
@@ -16,6 +17,7 @@ from core.theme.pic import Pics
 
 
 class ElectricalSubstation:
+
     def __init__(self, messenger_queue, sender_queue, sender_state_func, thread_label, ui):
         self.ui = ui
         self.state = False
@@ -27,13 +29,12 @@ class ElectricalSubstation:
 
         # self.mergeData = Cronjob(sender_state_func=sender_state_func)
         self.ArchiveQ = sender_queue
-        # self.create_sensors()
+        self.create_devices()
         self.stop_thread = False
         self.Thread = Thread(target=self.electrical_substation,
                              args=(lambda: self.stop_thread,))
         self.Thread.start()
-        self.RDThread = RenderingDataThread(sensor=self.sensors,
-                                            switch=self.switch,
+        self.RDThread = RenderingDataThread(device=self.devices,
                                             ui=self.ui)
 
     def electrical_substation(self, stop_thread):
@@ -91,28 +92,19 @@ class ElectricalSubstation:
             self.RDThread.stop_thread = False
             self.RDThread.restart_thread()
 
-    def create_sensors(self):
-        sensor_db = TinyDB(SensorDBPath).table(sensor_table_name)
-        switch_db = TinyDB(SwitchDBPath).table(switch_table_name)
+    def create_devices(self):
+        devices_db = TinyDB(SensorDBPath).table(sensor_table_name)
         # TODO:check konim bebinim hatman age data base haw khali bashi chi mishe error mdie ya na
 
-        r = sensor_db.all()
-        switches = switch_db.all()
-        self.switch = [CamSwitch(switch_id=int(i["id"]), sender_queue=self.ArchiveQ) for i in switches]
-
-        self.sensors = [Sensor(sensor_id=int(i["id"]), ui=self.ui, sender_queue=self.ArchiveQ) for i in r]
+        devices = devices_db.all()
+        self.devices = [Device(switch_id=int(i["id"]), sender_queue=self.ArchiveQ) for i in devices]
 
     def db_update_all(self):
-        self.read_all_sensor_data()
-        self.read_all_switch_data()
+        self.read_all_device_data()
 
     @staticmethod
-    def read_all_switch_data():
+    def read_all_device_data():
         get_from_site_db(MainGetSwitchURL, SwitchGetTimeout, SwitchDBPath, switch_table_name)
-
-    @staticmethod
-    def read_all_sensor_data():
-        get_from_site_db(MainGetSensorURL, SensorGetTimeout, SensorDBPath, sensor_table_name)
 
     def check(self):
         if not (self.RDThread.Thread.is_alive()):
@@ -174,10 +166,7 @@ class ElectricalSubstation:
 
     def update_system(self, where_should_update):
         if "TileKindUpdate" in where_should_update:
-            self.read_all_switch_data()
+            self.read_all_device_data()
             print("omad sensor")
-        if "SwitchKindUpdate" in where_should_update:
-            self.read_all_sensor_data()
-            print("omad switch")
 
-        self.create_sensors()
+        self.create_devices()
