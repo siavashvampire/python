@@ -30,13 +30,13 @@ class RenderingDataThread:
                 sensor_chosen = find_sensor_choose(choose, self.sensor)
                 switch_chosen = find_switch_choose(choose, self.switch)
 
-                if (switch_chosen is False and sensor_chosen is False) or (
-                        switch_chosen is not False and sensor_chosen is not False):
+                if (switch_chosen.Switch_id and sensor_chosen.sensor_id) or (
+                        switch_chosen.Switch_id and sensor_chosen.sensor_id):
                     r = "Sensor not Found , Choose : " + str(choose)
                     print(r)
                     Logging.line_monitoring_log("Check Choose", str(r))
 
-                if sensor_chosen is not False:
+                if sensor_chosen.sensor_id:
                     if self.ui.Setting.SendDataPrintFlag.isChecked():
                         bet_text = ":"
                         bet_text = " " + bet_text
@@ -64,7 +64,7 @@ class RenderingDataThread:
                             now1) + "روشن شده است"
                         self.messenger_queue.put([on_sensor_sms_text, sensor_chosen.unitId, sensor_chosen.Phase, 2])
 
-                if switch_chosen is not False:
+                if switch_chosen.Switch_id:
                     active_temp = ""
                     if data == OFFCamSwitchValue:
                         active_temp = "Deactivate"

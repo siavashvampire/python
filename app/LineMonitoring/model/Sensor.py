@@ -8,13 +8,6 @@ from core.model.DataType import sensor_new_log_data, sensor_activity_data, senso
     sensor_activity_class, sensor_activity_method, sensor_new_log_app, sensor_new_log_class, sensor_new_log_method
 
 
-def find_sensor_choose(choose, sensors):
-    for sen in sensors:
-        if sen.PLC_id == choose:
-            return sen
-    return False
-
-
 class Sensor:
     Active_Bale: object
     Active_SMS: object
@@ -26,6 +19,7 @@ class Sensor:
         self.Name = name
         self.SenderQ = sender_queue
         self.sensor_id = sensor_id
+        self.doc_id = 0
         self.counter = counter
         self.Tile_Kind = tile_kind
         self.Motor_Speed = motor_speed
@@ -42,7 +36,7 @@ class Sensor:
         if self.sensor_id:
             self.update(self.sensor_id)
 
-        if self.doc_id < 9 and ui is not None:
+        if self.doc_id < 9 and self.doc_id and ui is not None:
             from core.theme.pic import Pics
             self.lbl_Data_Name = ui.lbl_Data_Name[self.doc_id - 1]
             self.lbl_Data = ui.lbl_Data[self.doc_id - 1]
@@ -200,3 +194,10 @@ class Sensor:
                 return 0
         else:
             return 0
+
+
+def find_sensor_choose(choose: int, sensors: list) -> Sensor:
+    for sen in sensors:
+        if sen.PLC_id == choose:
+            return sen
+    return Sensor()

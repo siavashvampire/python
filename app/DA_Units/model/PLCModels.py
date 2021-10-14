@@ -327,7 +327,10 @@ class GateWay:
         self.DiffTime = False
         if self.app_name == "Mersad Monitoring System":
             self.thread_func = self.line_monitoring_read_data_from_plc_thread
-        elif self.app_name == "Electrical Substation":
+        elif "ElectricalSubstation" in self.app_name:
+            s = self.app_name.split("_")
+            self.app_name = s[0]
+            self.electrical_substation_id = s[1]
             self.thread_func = self.electrical_substation_read_data_from_plc_thread
         if messenger_queue is not None:
             self.MessengerQ = messenger_queue
@@ -626,7 +629,8 @@ class GateWay:
                     return None
 
                 dict_data_out = {
-                    "address": rs_485_address,
+                    "substation_id": self.electrical_substation_id,
+                    "unitId": rs_485_address,
                     "Current_A": incoming_data[0],
                     "Current_B": incoming_data[1],
                     "Current_C": incoming_data[2],
@@ -673,7 +677,8 @@ class GateWay:
                     "Power_Factor_A": incoming_data[38],
                     "Power_Factor_B": incoming_data[39],
                     "Power_Factor_C": incoming_data[40],
-                    "Power_Factor_Total": incoming_data[41],
+                    # "Power_Factor_Total": incoming_data[41],
+                    "Power_Factor_Total": incoming_data[47],
                     "Displacement_Power_Factor_A": incoming_data[42],
                     "Displacement_Power_Factor_B": incoming_data[43],
                     "Displacement_Power_Factor_C": incoming_data[44],
@@ -681,7 +686,7 @@ class GateWay:
 
                     "Frequency": incoming_data[46],
 
-                    "Power_Factor_Total_IEEE": incoming_data[47],
+                    # "Power_Factor_Total_IEEE": incoming_data[47],
 
                     "Active_Energy_Delivered_Into_Load": incoming_data[48],
                     "Active_Energy_Received_Out_of_Load": incoming_data[49],

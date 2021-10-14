@@ -252,6 +252,7 @@ boundaryForPayload = "----80085"
 ConfigDB.update({"Main_URL": str(Main_URL)})
 ConfigDB.update({"GetSensorURL": str(GetSensorURL)})
 ConfigDB.update({"GetSwitchURL": str(GetSwitchURL)})
+ConfigDB.update({"GetDeviceURL": str(GetDeviceURL)})
 ConfigDB.update({"Get_DAUnit_URL": str(Get_DAUnit_URL)})
 ConfigDB.update({"get_phones_url": str(get_phones_url)})
 ConfigDB.update({"get_sms_phones_url": str(get_sms_phones_url)})

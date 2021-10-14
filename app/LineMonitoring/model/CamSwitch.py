@@ -6,13 +6,6 @@ from core.config.Config import SwitchDBPath, OFFCamSwitchValue, ONCamSwitchValue
 from core.model.DataType import switch_activity_data, switch_activity_app, switch_activity_class, switch_activity_method
 
 
-def find_switch_choose(choose, switches):
-    for sw in switches:
-        if sw.PLC_id == choose:
-            return sw
-    return False
-
-
 class CamSwitch:
     PLC_id: int
     doc_id: int
@@ -20,6 +13,7 @@ class CamSwitch:
     def __init__(self, switch_id=0, name="", unit_id=None, phase=None, active=False, sender_queue=None):
         self.Name = name
         self.Switch_id = switch_id
+        self.doc_id = 0
         self.Active = active
         self.SenderQ = sender_queue
         self.Phase = phase
@@ -89,3 +83,10 @@ class CamSwitch:
                 return 0
         else:
             return 0
+
+
+def find_switch_choose(choose: int, switches: list) -> CamSwitch:
+    for sw in switches:
+        if sw.PLC_id == choose:
+            return sw
+    return CamSwitch()
