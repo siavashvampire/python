@@ -18,7 +18,7 @@ class DAUnits:
         self.units = []
         self.state = False
         self.stop_check = False
-        self.update_system()
+        # self.update_system()
         # TODO:update system bayad baresh darim
         self.create_units()
 
@@ -116,7 +116,6 @@ class DAUnits:
 
     @staticmethod
     def read_all_units():
-        print(Main_Get_DAUnit_URL)
         get_from_site_db(get_url=Main_Get_DAUnit_URL, get_timeout=DAUnitsGetTimeout, db_path=DADBPath,
                          table_name=DATableName)
 

@@ -290,7 +290,7 @@ class Delta12SE:
 
 class GateWay:
     def __init__(self, db_id=0, ip="192.168.1.240", port=502, name="", test_port=0, messenger_queue=None,
-                 app_name="Electrical Substation",
+                 app_name="ElectricalSubstation_0",
                  line_monitoring_queue=None,
                  electrical_substation_queue=None):
         from core.theme.pic import Pics
@@ -315,7 +315,10 @@ class GateWay:
         self.RPS = 0
         self.TimeDis = False
         self.DiffTime = False
-        print(self.app_name)
+
+        if db_id:
+            self.update()
+
         if self.app_name == "Mersad Monitoring System":
             self.thread_func = self.line_monitoring_read_data_from_plc_thread
         elif "ElectricalSubstation" in self.app_name:
@@ -333,8 +336,6 @@ class GateWay:
         self.ReadingDataThread = threading.Thread(target=self.thread_func,
                                                   args=(lambda: self.stop_thread,))
 
-        if db_id:
-            self.update()
 
         # if self.DBid < 5 and UI is not None:
         #     self.PLC_Status_lbl = UI.PLC_Status_lbl[self.DBid - 1]

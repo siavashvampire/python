@@ -1,1 +1,0 @@
-{"DAUnits": {"1": {"id": 1, "label": "plc", "IP": "192.168.1.239", "type": "PLC_delta_DVP_12SE", "testPort": 0, "app": "LineMonitoring"}, "2": {"id": 2, "label": "gateway", "IP": "192.168.1.240", "type": "MERSAD_GATEWAY", "testPort": 0, "app": "ElectricalSubstation_1"}}}
