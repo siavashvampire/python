@@ -31,6 +31,10 @@ def get_from_site_db(get_url, get_timeout, db_path='', table_name=''):
                 print("bad response")
                 return False, "bad response " + str(e)
             status = True
+        elif status_code == 204:
+            return True, False
+        elif status_code == 205:
+            return True, True
         elif status_code == 400:
             r = (response.json())["message"]
         else:
@@ -62,6 +66,10 @@ def site_connection(url, timeout, data=None, header=None):
             r = response.json()
             if r["status"] is True:
                 return r["status"], r
+        elif status_code == 204:
+            return True, False
+        elif status_code == 205:
+            return True, True
         elif status_code == 404:
             r = "Non Existing URL Path"
         elif status_code == 400:

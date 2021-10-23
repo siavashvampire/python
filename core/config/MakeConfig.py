@@ -33,7 +33,7 @@ ConfigDB.update({"HelpPDFTimeOut": str(HelpPDFTimeOut)})
 # end  Bale Config
 
 # start  format Config
-time_format = '%y-%m-%d %H:%M:%S'
+time_format = '%Y-%m-%d %H:%M:%S'
 send_time_format = '%y-%m-%d %H:%M:%S'
 day_time_format = '%Y/%m/%d'
 
@@ -219,7 +219,7 @@ ConfigDB.update({"device_table_name": str(device_table_name)})
 
 # Start  URL Config
 if devCon:
-    Main_URL = "http://192.168.1.8/Hafez/Monitoring_Tile/"
+    Main_URL = "http://192.168.1.10/Hafez/Monitoring_Tile/"
 else:
     Main_URL = "http://localhost/"
 GetSensorURL = "api/get/sensor"

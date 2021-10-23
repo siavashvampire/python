@@ -1,3 +1,7 @@
 .idea/*
 __pycache__/*
 File/DataBase/*
+
+app/Logging/app_provider/admin/__pycache__/*
+app/*/app_provider/admin/__pycache__/*
+app/*/*/__pycache__/*
