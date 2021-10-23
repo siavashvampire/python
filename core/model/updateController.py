@@ -30,6 +30,7 @@ class UpdateController:
                 self.update_queue.get(timeout=update_system_sleep_time)
                 self.update_queue.task_done()
                 self.update_system()
+            #     TODO:bayad hameye get haro intori konam k timeout dashte bashan na sleep
             except:
                 pass
 
