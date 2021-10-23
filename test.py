@@ -322,7 +322,3 @@
 # # read_onBoard_sensors()
 # # read_num_of_data_in_queue()
 # # sleep(0.5)
-
-from app.shift.model.Day import isDayUpdated
-
-print(isDayUpdated())

@@ -14,18 +14,8 @@ import app.Logging.app_provider.admin.MersadLogging as Logging
 from app.LineMonitoring.app_provider.api.LastLog import getABSecond, getText
 from app.LineMonitoring.app_provider.api.ReadText import PLCConnectBaleText, PLCDisconnectBaleText, VirtualText
 from core.config.Config import DADBPath, ModbusTimeout, PLCTimeSleepMax, PLCTimeSleepMin, PLCRefreshTime, \
-    PLCSleepTimeStepUp, \
-    PLCSleepTimeStepDown, DisconnectAlarmTime, send_time_format, DATableName
+    PLCSleepTimeStepUp, PLCSleepTimeStepDown, DisconnectAlarmTime, send_time_format, DATableName
 from core.config.Config import RegisterForData, RegisterForCounter, RegisterForStartRead, RegisterForEndRead
-
-
-# color = QColor(19, 164, 70)
-# alpha = 255
-# GreenColor = "{r}, {g}, {b}, {a}".format(r=color.red(),
-#                                          g=color.green(),
-#                                          b=color.blue(),
-#                                          a=alpha
-#                                          )
 
 
 def clear_plc_ui(ui):
@@ -325,6 +315,7 @@ class GateWay:
         self.RPS = 0
         self.TimeDis = False
         self.DiffTime = False
+        print(self.app_name)
         if self.app_name == "Mersad Monitoring System":
             self.thread_func = self.line_monitoring_read_data_from_plc_thread
         elif "ElectricalSubstation" in self.app_name:
