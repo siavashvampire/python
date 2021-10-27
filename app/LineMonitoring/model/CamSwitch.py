@@ -11,12 +11,13 @@ class CamSwitch:
     doc_id: int
 
     def __init__(self, switch_id=0, name="", unit_id=None, phase=None, active=False, sender_queue=None):
-        self.Name = name
+        self.label = name
         self.Switch_id = switch_id
         self.doc_id = 0
         self.Active = active
         self.SenderQ = sender_queue
-        self.Phase = phase
+        self.phase = phase
+        self.phaseLabel = phase
         self.unitId = unit_id
         self.data_type = switch_activity_data
         if self.Switch_id:
@@ -46,9 +47,10 @@ class CamSwitch:
         sea = SwitchDB.search(SwitchProp.id == switch_id)
         sea = sea[0]
         self.PLC_id = int(sea["PLC_id"])
-        self.Name = sea["Name"]
+        self.label = sea["label"]
         self.Active = sea["Active"]
-        self.Phase = sea["Phase"]
+        self.phase = sea["phase"]
+        self.phaseLabel = sea["phaseLabel"]
         self.unitId = sea["unitId"]
         self.doc_id = sea.doc_id
 

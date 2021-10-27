@@ -223,8 +223,8 @@ if devCon:
 else:
     Main_URL = "http://localhost/"
 
-GetSensorURL = "api/get/sensor"
-GetSwitchURL = "api/get/camSwitch"
+GetSensorURL = "api/sensor"
+GetSwitchURL = "api/cam_switch"
 GetDeviceURL = "api/electrical/device"
 Get_DAUnit_URL = "api/DAUnits"
 get_phones_url = "api/phones"
@@ -238,8 +238,6 @@ urlLogin = "api/user/login"
 urlcheckAccess = "api/checkAccess/index/"
 GetCheckURL = "api/get/Check"
 UserURL = "api/user/generateUser"
-ActiveURL = "api/chageStatus"
-SwitchURL = "api/chageStatus/camSwitch"
 DefaultLogURL = "api/multi_call"
 ExportURL = "api/export/"
 CronMergeURL = "api/cronjob/mergeData"
@@ -266,8 +264,6 @@ ConfigDB.update({"urlLogin": str(urlLogin)})
 ConfigDB.update({"urlcheckAccess": str(urlcheckAccess)})
 ConfigDB.update({"GetCheckURL": str(GetCheckURL)})
 ConfigDB.update({"UserURL": str(UserURL)})
-ConfigDB.update({"ActiveURL": str(ActiveURL)})
-ConfigDB.update({"SwitchURL": str(SwitchURL)})
 ConfigDB.update({"DefaultLogURL": str(DefaultLogURL)})
 ConfigDB.update({"ExportURL": str(ExportURL)})
 ConfigDB.update({"CronMergeURL": str(CronMergeURL)})

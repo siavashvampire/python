@@ -16,7 +16,7 @@ class Sensor:
 
     def __init__(self, sensor_id=0, name="", unit_id=None, phase=None, counter=1, off_time=5, off_time_bale=5,
                  off_time_sms=5, tile_kind=None, motor_speed=None, active=False, sender_queue=None, ui=None):
-        self.Name = name
+        self.label = name
         self.SenderQ = sender_queue
         self.sensor_id = sensor_id
         self.doc_id = 0
@@ -28,8 +28,9 @@ class Sensor:
         self.OffTime = off_time
         self.OffTime_Bale = off_time_bale
         self.OffTime_SMS = off_time_sms
-        self.Phase = phase
-        self.unitId = unit_id
+        self.phaseLabel = phase
+        self.phase = phase
+        self.unit = unit_id
         self.data_type = sensor_new_log_data
         self.data_activity_type = sensor_activity_data
 
@@ -41,7 +42,7 @@ class Sensor:
             self.lbl_Data_Name = ui.lbl_Data_Name[self.doc_id - 1]
             self.lbl_Data = ui.lbl_Data[self.doc_id - 1]
             self.lbl_Data_Status = ui.lbl_Data_Status[self.doc_id - 1]
-            self.lbl_Data_Name.setText(str(self.Name))
+            self.lbl_Data_Name.setText(str(self.label))
 
             if self.Active:
                 self.lbl_Data_Status.setPixmap(Pics.checkMark)
@@ -91,7 +92,7 @@ class Sensor:
         self.PLC_id = int(sea["PLC_id"])
         self.counter = sea["tile_Count"]
         self.Tile_Kind = sea["tile_id"]
-        self.Name = sea["Name"]
+        self.label = sea["label"]
         self.OffTime = sea["OffTime"]
         self.OffTime_Bale = sea["OffTime_Bale"]
         self.OffTime_SMS = sea["OffTime_SMS"]
@@ -99,8 +100,9 @@ class Sensor:
         self.Active = sea["Active"]
         self.Active_Bale = self.Active
         self.Active_SMS = self.Active
-        self.Phase = sea["Phase"]
-        self.unitId = sea["unitId"]
+        self.phaseLabel = sea["phaseLabel"]
+        self.phase = sea["phase"]
+        self.unit = sea["unit"]
         self.doc_id = sea.doc_id
         LTime = LastLog.get(self.sensor_id)
         if LTime is not None:

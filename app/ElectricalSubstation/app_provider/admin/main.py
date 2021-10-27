@@ -71,16 +71,16 @@ class ElectricalSubstation:
                                         if self.ui.Setting.baleONOFFSendFlag.isChecked():
                                             if self.ui.Setting.baleONOFFFlag.isChecked():
                                                 print("off Sensor {} send".format(s.sensor_id))
-                                            off_sensor_bale_text = str(s.Name) + " فاز " + str(s.Phase) + str(
+                                            off_sensor_bale_text = str(s.label) + " فاز " + str(s.phaseLabel) + str(
                                                 now_te.strftime(' در %y/%m/%d ساعت %H:%M:%S')) + " خاموش شده است"
-                                            self.messenger_queue.put([off_sensor_bale_text, s.unitId, s.Phase, 1])
+                                            self.messenger_queue.put([off_sensor_bale_text, s.unit, s.phase, 1])
                             if s.OffTime_SMS:
                                 if s.Active_SMS:
                                     if diff.days or diff.seconds > s.OffTime_SMS * 60:
                                         s.Active_SMS = False
-                                        off_sensor_sms_text = str(s.Name) + " فاز " + str(s.Phase) + str(
+                                        off_sensor_sms_text = str(s.label) + " فاز " + str(s.phaseLabel) + str(
                                             now_te.strftime(' در %y/%m/%d ساعت %H:%M:%S')) + " خاموش شده است"
-                                        self.messenger_queue.put([off_sensor_sms_text, s.unitId, s.Phase, 2])
+                                        self.messenger_queue.put([off_sensor_sms_text, s.unit, s.phase, 2])
 
     def restart_thread(self):
         if not (self.Thread.is_alive()):

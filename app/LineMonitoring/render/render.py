@@ -53,16 +53,16 @@ class RenderingDataThread:
                         if self.ui.Setting.baleONOFFSendFlag.isChecked():
                             if self.ui.Setting.baleONOFFFlag.isChecked():
                                 print("on Sensor {} send".format(sensor_chosen.sensor_id))
-                            on_sensor_bale_text = str(sensor_chosen.Name) + " فاز " + str(
-                                sensor_chosen.Phase) + " " + str(
+                            on_sensor_bale_text = str(sensor_chosen.label) + " فاز " + str(
+                                sensor_chosen.phaseLabel) + " " + str(
                                 now1) + "روشن شده است"
                             self.messenger_queue.put(
-                                [on_sensor_bale_text, sensor_chosen.unitId, sensor_chosen.Phase, 1])
+                                [on_sensor_bale_text, sensor_chosen.unit, sensor_chosen.phase, 1])
                     if sms_report_flag:
                         now1 = JalaliDateTime.to_jalali(datetime.now()).strftime('در %y/%m/%d ساعت %H:%M:%S')
-                        on_sensor_sms_text = str(sensor_chosen.Name) + " فاز " + str(sensor_chosen.Phase) + " " + str(
+                        on_sensor_sms_text = str(sensor_chosen.label) + " فاز " + str(sensor_chosen.phaseLabel) + " " + str(
                             now1) + "روشن شده است"
-                        self.messenger_queue.put([on_sensor_sms_text, sensor_chosen.unitId, sensor_chosen.Phase, 2])
+                        self.messenger_queue.put([on_sensor_sms_text, sensor_chosen.unit, sensor_chosen.phase, 2])
 
                 if switch_chosen.Switch_id:
                     active_temp = ""
@@ -81,13 +81,13 @@ class RenderingDataThread:
                         print("Send Data from switch {choose}{bet}{Active}".format(choose=choose, Active=active_temp,
                                                                                    bet=bet_text))
                     bale_report_flag, sms_report_flag = switch_chosen.send(data)
-                    on_switch_text = str(switch_chosen.Name) + " فاز " + str(switch_chosen.Phase) + " " + str(
+                    on_switch_text = str(switch_chosen.label) + " فاز " + str(switch_chosen.phase) + " " + str(
                         JalaliDateTime.to_jalali(datetime.now()).strftime(
                             'در %y/%m/%d ساعت %H:%M:%S')) + "روشن شده است"
                     if bale_report_flag:
-                        self.messenger_queue.put([on_switch_text, switch_chosen.unitId, switch_chosen.Phase, 1])
+                        self.messenger_queue.put([on_switch_text, switch_chosen.unitId, switch_chosen.phase, 1])
                     if sms_report_flag:
-                        self.messenger_queue.put([on_switch_text, switch_chosen.unitId, switch_chosen.Phase, 2])
+                        self.messenger_queue.put([on_switch_text, switch_chosen.unitId, switch_chosen.phase, 2])
 
             else:
                 if stop_thread():

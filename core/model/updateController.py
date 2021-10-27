@@ -43,17 +43,21 @@ class UpdateController:
 
     def update_system(self):
         get = get_from_site_db(main_update_system_url, update_system_timeout)
+
         if not get[0]:
             return None
 
         r = dict(get[1])
-        app_order = ["siavash", "ElectricalSubstation", "bale_org", "da_units"]
+        app_order = ["LineMonitoring", "ElectricalSubstation", "contacts", "DAUnits"]
 
         if app_order[0] in r.keys() and r[app_order[0]] is not None:
             self.line_monitoring_update_func(r[app_order[0]])
+
         if app_order[1] in r.keys() and r[app_order[1]] is not None:
             self.electrical_update_func()
+
         if app_order[2] in r.keys() and r[app_order[2]] is not None:
             self.bale_org_update_func()
+
         if app_order[3] in r.keys() and r[app_order[3]] is not None:
             self.da_units_update_func()
