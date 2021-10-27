@@ -3,6 +3,11 @@ from time import sleep
 from datetime import datetime
 from threading import Thread
 
+from core.config.Config import DBPath
+from app.ResourcePath.app_provider.admin.main import resource_path as get_path
+
+os.makedirs(get_path(DBPath), exist_ok=True)
+
 import app.Logging.app_provider.admin.MersadLogging as Logging
 import singleton
 from MainCode import path

@@ -322,3 +322,22 @@
 # # read_onBoard_sensors()
 # # read_num_of_data_in_queue()
 # # sleep(0.5)
+
+sensor_type_deactivate = 0b00
+sensor_type_on_timer = 0b01
+sensor_type_edge = 0b10
+sensor_type_both = 0b11
+
+
+def convert_sensor_to_deci(sensor):
+    total = 0b0
+    com = 0b1
+
+    for i in sensor:
+        total += i * com
+        com *= 0b100
+    return total
+
+
+sensor_type = [sensor_type_edge, sensor_type_edge, sensor_type_edge, sensor_type_edge, sensor_type_both]
+print(convert_sensor_to_deci(sensor_type))

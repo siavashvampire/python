@@ -219,9 +219,10 @@ ConfigDB.update({"device_table_name": str(device_table_name)})
 
 # Start  URL Config
 if devCon:
-    Main_URL = "http://192.168.1.10/Hafez/Monitoring_Tile/"
+    Main_URL = "http://192.168.1.4/Hafez/Monitoring_Tile/"
 else:
     Main_URL = "http://localhost/"
+
 GetSensorURL = "api/get/sensor"
 GetSwitchURL = "api/get/camSwitch"
 GetDeviceURL = "api/electrical/device"

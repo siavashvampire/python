@@ -42,7 +42,11 @@ class UpdateController:
                 self.last_check = datetime.now()
 
     def update_system(self):
-        r = dict(get_from_site_db(main_update_system_url, update_system_timeout)[1])
+        get = get_from_site_db(main_update_system_url, update_system_timeout)
+        if not get[0]:
+            return None
+
+        r = dict(get[1])
         app_order = ["siavash", "ElectricalSubstation", "bale_org", "da_units"]
 
         if app_order[0] in r.keys() and r[app_order[0]] is not None:
