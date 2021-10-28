@@ -7,3 +7,4 @@ pip install python-dateutil
 pip install persiantools
 pip install pyModbusTCP
 pip install pandas
+pip install PyQt5Designer
