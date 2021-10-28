@@ -9,8 +9,8 @@ from PyQt5.QtGui import QColor
 
 class TableWidget(QTableWidget):
     def __init__(self):
-        super().__init__(1, 5)
-        self.setHorizontalHeaderLabels(list('ABCDE'))
+        super().__init__()
+        # self.setHorizontalHeaderLabels(list('ABCDE'))
         self.verticalHeader().setDefaultSectionSize(50)
         self.horizontalHeader().setDefaultSectionSize(250)
         self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
@@ -41,18 +41,17 @@ class AppDemo(QWidget):
         main_layout = QHBoxLayout()
         table = TableWidget()
 
-        table.setRowCount(len(colors))
-        table.setColumnCount(len(colors[0]) + 1)
-        table.setHorizontalHeaderLabels(["Name", "Hex Code", "Color"])
+        table.setRowCount(len(inputs))
+        table.setColumnCount(len(inputs[0]))
+        table.setHorizontalHeaderLabels(["Input", "State"])
 
-        for i, (name, code) in enumerate(colors):
+        for i, (name, code) in enumerate(inputs):
             item_name = QTableWidgetItem(name)
             item_code = QTableWidgetItem(code)
-            item_color = QTableWidgetItem()
-            item_color.setBackground(get_rgb_from_hex(code))
+            # item_color = QTableWidgetItem()
+            # item_color.setBackground(get_rgb_from_hex(code))
             table.setItem(i, 0, item_name)
             table.setItem(i, 1, item_code)
-            table.setItem(i, 2, item_color)
 
         main_layout.addWidget(table)
         button_layout = QVBoxLayout()
@@ -73,20 +72,14 @@ class AppDemo(QWidget):
         self.setLayout(main_layout)
 
 
-def get_rgb_from_hex(code):
-    code_hex = code.replace("#", "")
-    rgb = tuple(int(code_hex[i:i + 2], 16) for i in (0, 2, 4))
-    return QColor.fromRgb(rgb[0], rgb[1], rgb[2])
-
-
-colors = [("Red", "#FF0000"),
-          ("Green", "#00FF00"),
-          ("Blue", "#0000FF"),
-          ("Black", "#000000"),
-          ("White", "#FFFFFF"),
-          ("Electric Green", "#41CD52"),
-          ("Dark Blue", "#222840"),
-          ("Yellow", "#F9E56d")]
+inputs = [("X0", "OFF"),
+          ("X1", "OFF"),
+          ("X2", "OFF"),
+          ("X3", "OFF"),
+          ("X4", "OFF"),
+          ("X5", "OFF"),
+          ("X6", "OFF"),
+          ("X7", "OFF")]
 
 app = QApplication(sys.argv)
 app.setStyleSheet('QPushButton{font-size: 20px; width: 200px; height: 50px}')
