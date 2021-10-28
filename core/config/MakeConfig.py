@@ -29,7 +29,7 @@ help_file_name = 'File/Help/BaleHelp'
 help_pdf_timeout = 100
 
 config_db.insert({"bale_token": str(bale_token)})
-config_db.update({"Bale_Base_URL": str(bale_base_url)})
+config_db.update({"bale_base_url": str(bale_base_url)})
 config_db.update({"help_file_name": str(help_file_name)})
 config_db.update({"help_pdf_timeout": str(help_pdf_timeout)})
 # end  Bale Config
@@ -253,7 +253,7 @@ count_for_send_list = 50
 boundary_for_payload = "----80085"
 
 config_db.update({"main_url": str(main_url)})
-config_db.update({"GetSensorURL": str(get_sensor_url)})
+config_db.update({"get_sensor_url": str(get_sensor_url)})
 config_db.update({"get_switch_url": str(get_switch_url)})
 config_db.update({"get_device_url": str(get_device_url)})
 config_db.update({"get_da_unit_url": str(get_da_unit_url)})

@@ -162,6 +162,7 @@ main_get_switch_url = main_url + get_switch_url
 main_get_device_url = main_url + get_device_url
 main_get_da_unit_url = main_url + get_da_unit_url
 main_get_phones_url = main_url + get_phones_url
+main_get_sms_phones_url = main_url + get_sms_phones_url
 main_get_admin_day_url = main_url + get_admin_day_url
 main_get_is_day_update_url = main_url + get_is_day_update_url
 main_get_counter_url = main_url + get_counter_url

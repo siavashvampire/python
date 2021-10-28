@@ -18,7 +18,7 @@ class CamSwitch:
         self.SenderQ = sender_queue
         self.phase = phase
         self.phaseLabel = phase
-        self.unitId = unit_id
+        self.unit = unit_id
         self.data_type = switch_activity_data
         if self.Switch_id:
             self.update(self.Switch_id)
@@ -51,7 +51,7 @@ class CamSwitch:
         self.Active = sea["Active"]
         self.phase = sea["phase"]
         self.phaseLabel = sea["phaseLabel"]
-        self.unitId = sea["unitId"]
+        self.unit = sea["unit"]
         self.doc_id = sea.doc_id
 
     def get_data(self, value, time):

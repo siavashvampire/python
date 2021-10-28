@@ -13,7 +13,8 @@ from tinydb import TinyDB
 import app.Logging.app_provider.admin.MersadLogging as Logging
 from app.LineMonitoring.app_provider.api.LastLog import getABSecond, getText
 from app.LineMonitoring.app_provider.api.ReadText import PLCConnectBaleText, PLCDisconnectBaleText, VirtualText
-from core.config.Config import da_unit_db_path, modbus_timeout, plc_time_sleep_max, plc_time_sleep_min, plc_refresh_time, \
+from core.config.Config import da_unit_db_path, modbus_timeout, plc_time_sleep_max, plc_time_sleep_min, \
+    plc_refresh_time, \
     plc_sleep_time_step_up, plc_sleep_time_step_down, disconnect_alarm_time, send_time_format, da_unit_table_name
 from core.config.Config import register_for_data, register_for_counter, register_for_start_read, register_for_end_read
 
@@ -336,7 +337,6 @@ class GateWay:
         self.ReadingDataThread = threading.Thread(target=self.thread_func,
                                                   args=(lambda: self.stop_thread,))
 
-
         # if self.DBid < 5 and UI is not None:
         #     self.PLC_Status_lbl = UI.PLC_Status_lbl[self.DBid - 1]
         #     self.PLC_Counter_lbl = UI.PLC_Counter_lbl[self.DBid - 1]
@@ -362,6 +362,7 @@ class GateWay:
 
     def run_thread(self):
         self.ReadingDataThread.start()
+        print(self.Name)
         Logging.da_log("Init PLC " + self.Name, "PLC " + self.Name + " start")
 
     def update(self):
@@ -475,7 +476,7 @@ class GateWay:
         while True:
             if stop_thread():
                 Logging.da_log("Reading Data Thread " + self.Name, "PLC " + self.Name + " Stop")
-                print("stop PLC " + self.Name)
+                print("stop gateway " + self.Name)
                 break
             sleep(self.SleepTime)
             try:
@@ -544,16 +545,18 @@ class GateWay:
         while True:
             if stop_thread():
                 Logging.da_log("Reading Data Thread " + self.Name, "PLC " + self.Name + " Stop")
-                print("stop PLC " + self.Name)
+                print("stop gateway " + self.Name)
                 break
             sleep(self.SleepTime)
             try:
                 # plc_is_open = self.client.is_open()
                 plc_is_open = self.client.open()
+
                 if not plc_is_open:
                     self.ReadCounter = 0
                     self.DataCounter = 0
                     self.ret_num += 1
+
                     print("PLC " + str(self.Name) + " disconnected! | retry number : " + str(self.ret_num))
                     self.disconnect()
 
@@ -576,18 +579,9 @@ class GateWay:
                             self.electrical_substation_queue.put([data])
 
                     self.connect()
-                    # if self.checkBox_Test.isChecked():
-                    #     self.client.write_single_coil(RegisterForTest, 1)
-                    # else:
-                    #     self.client.write_single_coil(RegisterForTest, 0)
-                    #
-                    # if self.checkBox_Counter.isChecked():
-                    #     self.SleepTime = 0
-                    #     try:
-                    #         self.Counter()
-                    #     except:
-                    #         pass
+
             except Exception as e:
+                print(e)
                 Logging.da_log("send and receive " + str(self.DBid), str(e))
                 break
 

@@ -21,7 +21,8 @@ from core.RH.ResponseHandler import PhoneNumberResponseHandler as RHPhone
 from core.app_provider.api.get import site_connection, get_from_site_db
 from core.config.Config import bale_token, bale_base_url, phone_db_path, sms_phone_db_path, main_get_activity_url, \
     main_get_counter_url, main_export_url, bale_get_timeout, help_file_name, help_pdf_timeout, login_developer, \
-    get_phones_url, phones_get_timeout, phone_table_name, sms_phone_table_name, get_sms_phones_url
+    phones_get_timeout, phone_table_name, sms_phone_table_name, \
+    main_get_sms_phones_url, main_get_phones_url
 from core.model.DataType import bale_data, bale_app_name
 from core.theme.pic import Pics
 
@@ -125,8 +126,8 @@ class BaleMain:
     def create_phones(self):
         r = TinyDB(phone_db_path).table(phone_table_name).all()
         phones = TinyDB(sms_phone_db_path).table(sms_phone_table_name).all()
-        self.phones_bale = [Phones(i["Name"], i["id"], i["SendONOFF"], i["Units"], i["phase"], i["Access"]) for i in r]
-        self.phones_SMS = [SMSPhones(i["Name"], i["Phone"], i["Units"], i["phase"], i["Access"]) for i in phones]
+        self.phones_bale = [Phones(i["name"], i["phone"], i["send_allow"], i["units"], i["phase"], i["access"]) for i in r]
+        self.phones_SMS = [SMSPhones(i["name"], i["phone"], i["units"], i["phase"], i["access"]) for i in phones]
 
     def send_to_phones(self, stop_thread):
         while True:
@@ -632,11 +633,11 @@ class BaleMain:
 
     @staticmethod
     def read_all_sms_phone():
-        get_from_site_db(get_sms_phones_url, phones_get_timeout, sms_phone_db_path, sms_phone_table_name)
+        get_from_site_db(main_get_sms_phones_url, phones_get_timeout, sms_phone_db_path, sms_phone_table_name)
 
     @staticmethod
     def read_all_phone():
-        get_from_site_db(get_phones_url, phones_get_timeout, phone_db_path, phone_table_name)
+        get_from_site_db(main_get_phones_url, phones_get_timeout, phone_db_path, phone_table_name)
 
     def db_update_all(self):
         self.read_all_phone()

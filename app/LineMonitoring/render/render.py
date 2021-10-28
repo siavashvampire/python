@@ -85,9 +85,9 @@ class RenderingDataThread:
                         JalaliDateTime.to_jalali(datetime.now()).strftime(
                             'در %y/%m/%d ساعت %H:%M:%S')) + "روشن شده است"
                     if bale_report_flag:
-                        self.messenger_queue.put([on_switch_text, switch_chosen.unitId, switch_chosen.phase, 1])
+                        self.messenger_queue.put([on_switch_text, switch_chosen.unit, switch_chosen.phase, 1])
                     if sms_report_flag:
-                        self.messenger_queue.put([on_switch_text, switch_chosen.unitId, switch_chosen.phase, 2])
+                        self.messenger_queue.put([on_switch_text, switch_chosen.unit, switch_chosen.phase, 2])
 
             else:
                 if stop_thread():

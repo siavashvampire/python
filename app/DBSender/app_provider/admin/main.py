@@ -10,7 +10,8 @@ import app.Logging.app_provider.admin.MersadLogging as Logging
 from core.RH.ResponseHandler import send_data
 from core.app_provider.api.get import get_from_site_db, site_connection
 from core.config.Config import main_get_check_url, log_db_path, main_default_log_url, send_timeout, check_timeout, \
-    queue_sender_max_wait, sleep_time_1, sleep_time_2, sleep_time_3, sender_table_name, count_for_send_list, boundaryForPayload, send_list_flag
+    queue_sender_max_wait, sleep_time_1, sleep_time_2, sleep_time_3, sender_table_name, count_for_send_list, \
+    boundary_for_payload, send_list_flag
 from core.theme.pic import Pics
 
 
@@ -125,10 +126,10 @@ class DataArchive:
             index = 0
             if self.check_db():
                 payload = json.dumps(payload)
-                payload = "--" + boundaryForPayload + "\r\nContent-Disposition: form-data; name=\"DataArray\"\r\n\r\n" \
-                          + payload + "\r\n--" + boundaryForPayload + "--"
+                payload = "--" + boundary_for_payload + "\r\nContent-Disposition: form-data; name=\"DataArray\"\r\n\r\n" \
+                          + payload + "\r\n--" + boundary_for_payload + "--"
                 headers = {'cache-control': "no-cache",
-                           'content-type': "multipart/form-data; boundary=" + boundaryForPayload}
+                           'content-type': "multipart/form-data; boundary=" + boundary_for_payload}
                 status, r = site_connection(url, send_timeout, data=payload, header=headers)
                 print(r)
                 good, index, error = send_data(r, status)

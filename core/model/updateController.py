@@ -51,13 +51,17 @@ class UpdateController:
         app_order = ["LineMonitoring", "ElectricalSubstation", "contacts", "DAUnits"]
 
         if app_order[0] in r.keys() and r[app_order[0]] is not None:
+            print("line_monitoring")
             self.line_monitoring_update_func(r[app_order[0]])
 
         if app_order[1] in r.keys() and r[app_order[1]] is not None:
-            self.electrical_update_func()
+            print("elec")
+            # self.electrical_update_func()
 
         if app_order[2] in r.keys() and r[app_order[2]] is not None:
+            print("bale_org")
             self.bale_org_update_func()
 
         if app_order[3] in r.keys() and r[app_order[3]] is not None:
+            print("da_units")
             self.da_units_update_func()
