@@ -4,7 +4,7 @@ from tinydb import TinyDB
 import hashlib
 
 config_path = "File/Config/"
-config_db_name = 'Config.json'
+config_db_name = 'config.json'
 config_table_name = 'config'
 
 os.makedirs(resource_path(config_path), exist_ok=True)

@@ -9,5 +9,4 @@ core/*/__pycache__
 core/*/*/__pycache__
 
 File/DataBase/
-File/
 *.pyc

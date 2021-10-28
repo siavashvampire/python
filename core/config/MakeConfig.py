@@ -4,7 +4,7 @@ from tinydb import TinyDB
 import hashlib
 
 config_path = "../../File/Config/"
-config_db_name = 'Config.json'
+config_db_name = 'config.json'
 config_table_name = 'config'
 
 developer = 1
@@ -247,7 +247,7 @@ export_url = "api/export/"
 cronjob_merge_url = "api/cronjob/mergeData"
 cronjob_update_shift_url = "api/cronjob/updateShift"
 cronjob_update_day_url = "api/cronjob/updateDay"
-sms_phone_send_url = "http://ippanel.com/class/sms/webservice/send_url.php"
+sms_phone_send_url = "https://ippanel.com/class/sms/webservice/send_url.php"
 send_list_flag = 1
 count_for_send_list = 50
 boundary_for_payload = "----80085"
