@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QFileDialog, QWidget
 from PyQt5.QtWidgets import QFrame
 
 from MainCode import path
-from app.insertUser.app_provider.admin.user import InsertWorkerUser as InsWorker
+from app.insertUser.app_provider.admin.user import insert_user as InsWorker
 
 
 class MainUi(QFrame):

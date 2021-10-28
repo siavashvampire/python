@@ -1,28 +1,9 @@
-import json
-from core.config.Config import main_user_url, user_timeout
+from core.app_provider.api.get import site_connection
+from core.config.Config import main_add_user_url, user_timeout
 
 
-def InsertWorkerUser(fname, lname, email, phone, password):
-    payload = {"fname": str(fname), "lname": str(lname), "email": str(email), "phone": str(phone),
+def insert_user(f_name, l_name, email, phone, password):
+    payload = {"fname": str(f_name), "lname": str(l_name), "email": str(email), "phone": str(phone),
                "password": str(password), "groupId": "6", "verified": "1"}
-    status_code = 0
-    try:
-        response = requests.post(main_user_url, data=payload, timeout=user_timeout)
-    except requests.exceptions.HTTPError as errh:
-        r = "Http Error:"
-    except requests.exceptions.ConnectionError as errc:
-        r = "Error Connecting Maybe Apache"
-    except requests.exceptions.Timeout as errt:
-        r = "Timeout Error Maybe SQL Error"
-    except requests.exceptions.RequestException as err:
-        r = "OOps: Something Else"
-    else:
-        if response.status_code == 200:
-            r = response.text
-            r = json.loads(r)
-        elif response.status_code == 400:
-            r = (response.json())["message"]
-        else:
-            r = response.text
-        status_code = response.status_code
-    return r, status_code
+
+    site_connection(main_add_user_url, user_timeout * 2, data=payload)
