@@ -2,9 +2,9 @@ from datetime import datetime
 
 from tinydb import TinyDB
 
-from core.config.Config import LoggingDBPath, time_format
+from core.config.Config import logging_db_path, time_format
 
-LoggingDB = TinyDB(LoggingDBPath)
+LoggingDB = TinyDB(logging_db_path)
 Main = LoggingDB.table('Main')
 PLC = LoggingDB.table('DA')
 Render = LoggingDB.table('LineMonitoring')

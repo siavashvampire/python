@@ -3,10 +3,10 @@ from time import sleep
 from datetime import datetime
 from threading import Thread
 
-from core.config.Config import DBPath
+from core.config.Config import db_path
 from app.ResourcePath.app_provider.admin.main import resource_path as get_path
 
-os.makedirs(get_path(DBPath), exist_ok=True)
+os.makedirs(get_path(db_path), exist_ok=True)
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
 import singleton
@@ -16,7 +16,7 @@ from app.DA_Units.app_provider.admin.main import DAUnits
 from app.DBSender.app_provider.admin.main import DataArchive
 from app.LineMonitoring.app_provider.admin.main import LineMonitoring
 from app.backup.app_provider.admin.main import BackupMain
-from core.config.Config import DBPath, LogoutTime
+from core.config.Config import db_path, logout_time
 from core.model.Login import LoginUI
 from core.model.MainUI import MainUi
 from core.model.SplashScreen import SplashScreen
@@ -126,7 +126,7 @@ class Main:
                 if self.loginFlag:
                     login_diff = datetime.now() - self.main_ui.LoginNow
                     # TODO:check konim k login bayad koja etefagh biofte
-                    if login_diff.seconds > LogoutTime:
+                    if login_diff.seconds > logout_time:
                         self.logout()
                 if stop_thread():
                     Logging.bale_log("Main Send Thread", "Stop")
@@ -231,4 +231,4 @@ class Main:
     def create_db_path():
         from app.ResourcePath.app_provider.admin.main import resource_path as get_path
 
-        os.makedirs(get_path(DBPath), exist_ok=True)
+        os.makedirs(get_path(db_path), exist_ok=True)

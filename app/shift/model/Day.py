@@ -4,11 +4,11 @@ from persiantools.jdatetime import JalaliDateTime
 
 from app.LineMonitoring.app_provider.api.ReadText import FailedText
 from core.app_provider.api.get import site_connection, get_from_site_db
-from core.config.Config import MainGetIsDayUPURL, CronJobTimeout, MainGetadminDayURL, time_format, day_time_format
+from core.config.Config import main_get_is_day_update_url, cronjob_timeout, main_get_admin_day_url, time_format, day_time_format
 
 
 def isDayUpdated():
-    get = get_from_site_db(MainGetIsDayUPURL, CronJobTimeout)
+    get = get_from_site_db(main_get_is_day_update_url, cronjob_timeout)
     status = get[0]
     if status:
         return get[1]
@@ -22,7 +22,7 @@ def adminDayCounter():
         'cache-control': "no-cache",
         'postman-token': "96d1603f-b13b-0da7-a12e-467ec0dfa771"
     }
-    status, r = site_connection(MainGetadminDayURL, CronJobTimeout, header=headers)[0:2]
+    status, r = site_connection(main_get_admin_day_url, cronjob_timeout, header=headers)[0:2]
     if status:
         now_te = JalaliDateTime.to_jalali(datetime.strptime(r["Time"], time_format)).strftime(day_time_format)
         text = "گزارش تولید {Time} \n".format(Time=now_te)

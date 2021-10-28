@@ -9,8 +9,8 @@ from tinydb import TinyDB, table
 import app.Logging.app_provider.admin.MersadLogging as Logging
 from core.RH.ResponseHandler import send_data
 from core.app_provider.api.get import get_from_site_db, site_connection
-from core.config.Config import MainGetCheckURL, LogDBPath, MainDefaultLogURL, SendTimeout, CheckTimeout, \
-    QSenderMaxWait, SleepTime1, SleepTime2, SleepTime3, SenderTableName, NForSendList, boundaryForPayload, SendListFlag
+from core.config.Config import main_get_check_url, log_db_path, main_default_log_url, send_timeout, check_timeout, \
+    queue_sender_max_wait, sleep_time_1, sleep_time_2, sleep_time_3, sender_table_name, count_for_send_list, boundaryForPayload, send_list_flag
 from core.theme.pic import Pics
 
 
@@ -22,7 +22,7 @@ class DataArchive:
         self.check_label = check_label
         self.checkDBui = False
         self.stop_check = False
-        self.DB = TinyDB(LogDBPath).table(SenderTableName)
+        self.DB = TinyDB(log_db_path).table(sender_table_name)
         self.insertFlag = False
         self.DBCheck = 2
         self.ArchiveQ = Queue()
@@ -43,17 +43,17 @@ class DataArchive:
             diff = datetime.now() - now
             sleep_time = 10
             if self.DBCheck == 2:
-                sleep_time = SleepTime3
+                sleep_time = sleep_time_3
             elif self.DBCheck == 1:
-                sleep_time = SleepTime2
+                sleep_time = sleep_time_2
             elif self.DBCheck == 0:
-                sleep_time = SleepTime1
+                sleep_time = sleep_time_1
             try:
                 save_item = self.ArchiveQ.get(block=False)
                 self.ArchiveQ.task_done()
                 self.save_data(save_item)
-                if QSenderMaxWait:
-                    if self.ArchiveQ.qsize() > QSenderMaxWait:
+                if queue_sender_max_wait:
+                    if self.ArchiveQ.qsize() > queue_sender_max_wait:
                         now = datetime.now()
             except Exception as e:
                 pass
@@ -95,8 +95,8 @@ class DataArchive:
 
     def get_save_data(self):
         if self.local_db_len():
-            if SendListFlag:
-                return self.DB.all()[0:NForSendList]
+            if send_list_flag:
+                return self.DB.all()[0:count_for_send_list]
             else:
                 return self.DB.all()[0]
         else:
@@ -120,7 +120,7 @@ class DataArchive:
             # TODO:aval check konim k age 1 dade bashe type mitone motefavet bashad ya na baad motmaen shim 1 dade ham dorost mifreste
             payload = data
 
-            url = MainDefaultLogURL
+            url = main_default_log_url
             good = False
             index = 0
             if self.check_db():
@@ -129,7 +129,7 @@ class DataArchive:
                           + payload + "\r\n--" + boundaryForPayload + "--"
                 headers = {'cache-control': "no-cache",
                            'content-type': "multipart/form-data; boundary=" + boundaryForPayload}
-                status, r = site_connection(url, SendTimeout, data=payload, header=headers)
+                status, r = site_connection(url, send_timeout, data=payload, header=headers)
                 print(r)
                 good, index, error = send_data(r, status)
                 # self.insertFlag = RH(r, status)
@@ -140,13 +140,13 @@ class DataArchive:
         if type(data) == table.Document:
             payload = data
 
-            url = MainDefaultLogURL
+            url = main_default_log_url
 
             good = False
             status_code = 0
             r = ""
             if self.check_db():
-                status, r = site_connection(url, SendTimeout, data=payload)
+                status, r = site_connection(url, send_timeout, data=payload)
                 good, index, error = send_data(r, status)
             if not (status_code in [200, 204, 205]):
                 Logging.sender_log("Sender", "status code : " + str(status_code) + " , " + str(r))
@@ -155,12 +155,12 @@ class DataArchive:
     def local_db_len(self):
         len_db = len(self.DB)
         if not len_db:
-            self.DB = TinyDB(LogDBPath).table(SenderTableName)
+            self.DB = TinyDB(log_db_path).table(sender_table_name)
         return len_db
 
     @staticmethod
     def check_db():
-        return get_from_site_db(MainGetCheckURL, CheckTimeout)[0]
+        return get_from_site_db(main_get_check_url, check_timeout)[0]
 
     def restart_thread(self):
         if not (self.Thread.is_alive()):

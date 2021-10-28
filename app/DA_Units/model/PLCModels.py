@@ -13,9 +13,9 @@ from tinydb import TinyDB
 import app.Logging.app_provider.admin.MersadLogging as Logging
 from app.LineMonitoring.app_provider.api.LastLog import getABSecond, getText
 from app.LineMonitoring.app_provider.api.ReadText import PLCConnectBaleText, PLCDisconnectBaleText, VirtualText
-from core.config.Config import DADBPath, ModbusTimeout, PLCTimeSleepMax, PLCTimeSleepMin, PLCRefreshTime, \
-    PLCSleepTimeStepUp, PLCSleepTimeStepDown, DisconnectAlarmTime, send_time_format, DATableName
-from core.config.Config import RegisterForData, RegisterForCounter, RegisterForStartRead, RegisterForEndRead
+from core.config.Config import da_unit_db_path, modbus_timeout, plc_time_sleep_max, plc_time_sleep_min, plc_refresh_time, \
+    plc_sleep_time_step_up, plc_sleep_time_step_down, disconnect_alarm_time, send_time_format, da_unit_table_name
+from core.config.Config import register_for_data, register_for_counter, register_for_start_read, register_for_end_read
 
 
 def clear_plc_ui(ui):
@@ -76,7 +76,7 @@ class Delta12SE:
         if messenger_queue is not None:
             self.MessengerQ = messenger_queue
         self.client = ModbusClient(host=self.IP, port=self.Port, auto_open=True, auto_close=False,
-                                   timeout=ModbusTimeout, debug=False)
+                                   timeout=modbus_timeout, debug=False)
         self.line_monitoring_queue = line_monitoring_queue
         self.electrical_substation_queue = electrical_substation_queue
         self.stop_thread = False
@@ -114,7 +114,7 @@ class Delta12SE:
         Logging.da_log("Init PLC " + self.Name, "PLC " + self.Name + " start")
 
     def update(self):
-        sea = TinyDB(DADBPath).table(DATableName).get(doc_id=self.DBid)
+        sea = TinyDB(da_unit_db_path).table(da_unit_table_name).get(doc_id=self.DBid)
         self.Port = 502
         self.TestPort = sea["testPort"]
         self.app = sea["app"]
@@ -122,7 +122,7 @@ class Delta12SE:
         self.Name = sea["label"]
 
         self.client = ModbusClient(host=self.IP, port=self.Port, auto_open=True, auto_close=False,
-                                   timeout=ModbusTimeout, debug=False)
+                                   timeout=modbus_timeout, debug=False)
 
     def disconnect(self):
         if self.first_bad:
@@ -146,7 +146,7 @@ class Delta12SE:
 
         # self.PLC_Counter_lbl.setText(str(self.ret_num))
         self.DiffTime = relativedelta(datetime.now(), self.TimeDis)
-        if getABSecond(self.DiffTime) > DisconnectAlarmTime and (not self.disc_msg_sent):
+        if getABSecond(self.DiffTime) > disconnect_alarm_time and (not self.disc_msg_sent):
             self.disc_msg_sent = True
             now1 = JalaliDateTime.to_jalali(self.TimeDis).strftime(send_time_format)
 
@@ -191,7 +191,7 @@ class Delta12SE:
         # self.lbl_Test.setText(str(data))
 
     def counter(self):
-        data = int(self.client.read_holding_registers(RegisterForCounter, 1)[0])
+        data = int(self.client.read_holding_registers(register_for_counter, 1)[0])
         if data > 32767:
             data = data - 65536
         self.ret_num = data
@@ -201,13 +201,13 @@ class Delta12SE:
         dps = self.DPS * 1.2
         if not (dps * 1.3 > self.RPS > dps):
             if dps >= self.RPS:
-                self.SleepTime -= PLCSleepTimeStepDown
+                self.SleepTime -= plc_sleep_time_step_down
             else:
-                self.SleepTime += PLCSleepTimeStepUp
-        if self.SleepTime <= PLCTimeSleepMin:
-            self.SleepTime = PLCTimeSleepMin
-        if self.SleepTime >= PLCTimeSleepMax:
-            self.SleepTime = PLCTimeSleepMax
+                self.SleepTime += plc_sleep_time_step_up
+        if self.SleepTime <= plc_time_sleep_min:
+            self.SleepTime = plc_time_sleep_min
+        if self.SleepTime >= plc_time_sleep_max:
+            self.SleepTime = plc_time_sleep_max
         self.SleepTime = round(self.SleepTime, 2)
 
     def restart_thread(self):
@@ -239,7 +239,7 @@ class Delta12SE:
 
                 if plc_is_open:
                     self.ReadCounter += 1
-                    if (datetime.now() - now_sleep).seconds >= PLCRefreshTime:
+                    if (datetime.now() - now_sleep).seconds >= plc_refresh_time:
                         now_sleep = datetime.now()
                         self.DPS = self.DataCounter
                         self.RPS = self.ReadCounter
@@ -271,9 +271,9 @@ class Delta12SE:
                 break
 
     def line_monitoring_read_data_from_plc(self):
-        self.client.write_single_coil(RegisterForStartRead, True)
-        data = self.client.read_holding_registers(RegisterForData, 1)
-        self.client.write_single_coil(RegisterForEndRead, True)
+        self.client.write_single_coil(register_for_start_read, True)
+        data = self.client.read_holding_registers(register_for_data, 1)
+        self.client.write_single_coil(register_for_end_read, True)
         if data is not None:
             data = int(data[0])
             if data:
@@ -329,7 +329,7 @@ class GateWay:
         if messenger_queue is not None:
             self.MessengerQ = messenger_queue
         self.client = ModbusClient(host=self.IP, port=self.Port, auto_open=True, auto_close=False,
-                                   timeout=ModbusTimeout, debug=False)
+                                   timeout=modbus_timeout, debug=False)
         self.line_monitoring_queue = line_monitoring_queue
         self.electrical_substation_queue = electrical_substation_queue
         self.stop_thread = False
@@ -365,7 +365,7 @@ class GateWay:
         Logging.da_log("Init PLC " + self.Name, "PLC " + self.Name + " start")
 
     def update(self):
-        sea = TinyDB(DADBPath).table(DATableName).get(doc_id=self.DBid)
+        sea = TinyDB(da_unit_db_path).table(da_unit_table_name).get(doc_id=self.DBid)
         self.Port = 502
         self.TestPort = sea["testPort"]
         self.app = sea["app"]
@@ -373,7 +373,7 @@ class GateWay:
         self.Name = sea["label"]
 
         self.client = ModbusClient(host=self.IP, port=self.Port, auto_open=True, auto_close=False,
-                                   timeout=ModbusTimeout, debug=False)
+                                   timeout=modbus_timeout, debug=False)
 
     def disconnect(self):
         if self.first_bad:
@@ -397,7 +397,7 @@ class GateWay:
 
         # self.PLC_Counter_lbl.setText(str(self.ret_num))
         self.DiffTime = relativedelta(datetime.now(), self.TimeDis)
-        if getABSecond(self.DiffTime) > DisconnectAlarmTime and (not self.disc_msg_sent):
+        if getABSecond(self.DiffTime) > disconnect_alarm_time and (not self.disc_msg_sent):
             self.disc_msg_sent = True
             now1 = JalaliDateTime.to_jalali(self.TimeDis).strftime(send_time_format)
 
@@ -442,7 +442,7 @@ class GateWay:
         # self.lbl_Test.setText(str(data))
 
     def counter(self):
-        data = int(self.client.read_holding_registers(RegisterForCounter, 1)[0])
+        data = int(self.client.read_holding_registers(register_for_counter, 1)[0])
         if data > 32767:
             data = data - 65536
         self.ret_num = data
@@ -452,13 +452,13 @@ class GateWay:
         dps = self.DPS * 1.2
         if not (dps * 1.3 > self.RPS > dps):
             if dps >= self.RPS:
-                self.SleepTime -= PLCSleepTimeStepDown
+                self.SleepTime -= plc_sleep_time_step_down
             else:
-                self.SleepTime += PLCSleepTimeStepUp
-        if self.SleepTime <= PLCTimeSleepMin:
-            self.SleepTime = PLCTimeSleepMin
-        if self.SleepTime >= PLCTimeSleepMax:
-            self.SleepTime = PLCTimeSleepMax
+                self.SleepTime += plc_sleep_time_step_up
+        if self.SleepTime <= plc_time_sleep_min:
+            self.SleepTime = plc_time_sleep_min
+        if self.SleepTime >= plc_time_sleep_max:
+            self.SleepTime = plc_time_sleep_max
         self.SleepTime = round(self.SleepTime, 2)
 
     def restart_thread(self):
@@ -490,7 +490,7 @@ class GateWay:
 
                 if plc_is_open:
                     self.ReadCounter += 1
-                    if (datetime.now() - now_sleep).seconds >= PLCRefreshTime:
+                    if (datetime.now() - now_sleep).seconds >= plc_refresh_time:
                         now_sleep = datetime.now()
                         self.DPS = self.DataCounter
                         self.RPS = self.ReadCounter
@@ -522,9 +522,9 @@ class GateWay:
                 break
 
     def line_monitoring_read_data_from_plc(self):
-        self.client.write_single_coil(RegisterForStartRead, True)
-        data = self.client.read_holding_registers(RegisterForData, 1)
-        self.client.write_single_coil(RegisterForEndRead, True)
+        self.client.write_single_coil(register_for_start_read, True)
+        data = self.client.read_holding_registers(register_for_data, 1)
+        self.client.write_single_coil(register_for_end_read, True)
         if data is not None:
             data = int(data[0])
             if data:
@@ -559,7 +559,7 @@ class GateWay:
 
                 if plc_is_open:
                     self.ReadCounter += 1
-                    if (datetime.now() - now_sleep).seconds >= PLCRefreshTime:
+                    if (datetime.now() - now_sleep).seconds >= plc_refresh_time:
                         now_sleep = datetime.now()
                         self.DPS = self.DataCounter
                         self.RPS = self.ReadCounter

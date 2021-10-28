@@ -8,7 +8,7 @@ from tinydb import TinyDB, Query
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
 from app.backup.model.dbbackupModel import BackupModel
-from core.config.Config import BackupDBPath, BackupTime, time_format
+from core.config.Config import backup_db_path, backup_time, time_format
 
 
 class BackupMain:
@@ -18,7 +18,7 @@ class BackupMain:
         self.state = False
         self.stop_check = False
         self.should_stop = False
-        self.BackupDB = TinyDB(BackupDBPath).table('Backup')
+        self.BackupDB = TinyDB(backup_db_path).table('Backup')
         self.BackupQ = Queue()
         self.stop_thread = False
         self.Thread = Thread(target=self.backup_thread, args=(lambda: self.stop_thread,))
@@ -47,7 +47,7 @@ class BackupMain:
                     print("stop Backup")
                     break
 
-            if (datetime.now() - self.last_check).seconds > BackupTime * 60:
+            if (datetime.now() - self.last_check).seconds > backup_time * 60:
                 self.check_backup_time()
                 self.last_check = datetime.now()
 
@@ -62,10 +62,10 @@ class BackupMain:
 
     def get_backup_from_ui(self):
         BackupProp = Query()
-        self.BackupDB = TinyDB(BackupDBPath)
+        self.BackupDB = TinyDB(backup_db_path)
         self.BackupDB.drop_tables()
         self.BackupDB.close()
-        self.BackupDB = TinyDB(BackupDBPath).table('Backup')
+        self.BackupDB = TinyDB(backup_db_path).table('Backup')
         for i in range(4):
             if str(self.ui.Backup_Name[i].text()) is not "":
                 Time = str(self.ui.Backup_Time[i].text())

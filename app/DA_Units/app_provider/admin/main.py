@@ -3,7 +3,7 @@ from tinydb import TinyDB, Query
 from app.DA_Units.model.PLCModels import Delta12SE, GateWay
 from app.DA_Units.model.PLCModels import clear_plc_ui
 from core.app_provider.api.get import get_from_site_db
-from core.config.Config import DADBPath, DAUnitsGetTimeout, Main_Get_DAUnit_URL, DATableName
+from core.config.Config import da_unit_db_path, da_units_get_timeout, main_get_da_unit_url, da_unit_table_name
 from core.theme.pic import Pics
 
 
@@ -11,7 +11,7 @@ class DAUnits:
     def __init__(self, messenger_q, line_monitoring_queue, electrical_substation_queue, thread_label):
         self.thread_label = thread_label
         self.should_stop = False
-        self.plc_db = TinyDB(DADBPath).table(DATableName)
+        self.plc_db = TinyDB(da_unit_db_path).table(da_unit_table_name)
         self.messenger_q = messenger_q
         self.line_monitoring_queue = line_monitoring_queue
         self.electrical_substation_queue = electrical_substation_queue
@@ -116,8 +116,8 @@ class DAUnits:
 
     @staticmethod
     def read_all_units():
-        get_from_site_db(get_url=Main_Get_DAUnit_URL, get_timeout=DAUnitsGetTimeout, db_path=DADBPath,
-                         table_name=DATableName)
+        get_from_site_db(get_url=main_get_da_unit_url, get_timeout=da_units_get_timeout, db_path=da_unit_db_path,
+                         table_name=da_unit_table_name)
 
     def update_system(self):
         self.read_all_units()

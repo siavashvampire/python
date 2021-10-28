@@ -7,7 +7,7 @@ from persiantools.jdatetime import JalaliDateTime
 import app.Logging.app_provider.admin.MersadLogging as Logging
 from app.LineMonitoring.model.CamSwitch import find_switch_choose
 from app.LineMonitoring.model.Sensor import find_sensor_choose
-from core.config.Config import OFFCamSwitchValue, ONCamSwitchValue
+from core.config.Config import off_cam_switch_value, on_cam_switch_value
 
 
 class RenderingDataThread:
@@ -66,9 +66,9 @@ class RenderingDataThread:
 
                 if switch_chosen.Switch_id:
                     active_temp = ""
-                    if data == OFFCamSwitchValue:
+                    if data == off_cam_switch_value:
                         active_temp = "Deactivate"
-                    if data == ONCamSwitchValue:
+                    if data == on_cam_switch_value:
                         active_temp = "Active"
                     if self.ui.Setting.SendDataPrintFlag.isChecked():
                         bet_text = ":"

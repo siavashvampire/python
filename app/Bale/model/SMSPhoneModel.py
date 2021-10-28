@@ -1,6 +1,6 @@
 
 
-from core.config.Config import SMSusername, SMSpassword, SMSPhone, PhoneTimeout, SMSPhoneURL
+from core.config.Config import sms_username, sms_password, sms_phone, phone_timeout, sms_phone_send_url
 
 
 class SMSPhoneData:
@@ -34,7 +34,7 @@ class SMSPhoneData:
         return False
 
     def Send(self, text):
-        querystring = {"from": SMSPhone, "to": "0" + str(self.Phone), "msg": text, "uname": SMSusername,
-                       "pass": SMSpassword}
-        response = requests.post(SMSPhoneURL, params=querystring, timeout=PhoneTimeout)
+        querystring = {"from": sms_phone, "to": "0" + str(self.Phone), "msg": text, "uname": sms_username,
+                       "pass": sms_password}
+        response = requests.post(sms_phone_send_url, params=querystring, timeout=phone_timeout)
         return response.text

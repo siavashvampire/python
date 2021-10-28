@@ -1,5 +1,5 @@
 import json
-from core.config.Config import MainUserURL, UserTimeout
+from core.config.Config import main_user_url, user_timeout
 
 
 def InsertWorkerUser(fname, lname, email, phone, password):
@@ -7,7 +7,7 @@ def InsertWorkerUser(fname, lname, email, phone, password):
                "password": str(password), "groupId": "6", "verified": "1"}
     status_code = 0
     try:
-        response = requests.post(MainUserURL, data=payload, timeout=UserTimeout)
+        response = requests.post(main_user_url, data=payload, timeout=user_timeout)
     except requests.exceptions.HTTPError as errh:
         r = "Http Error:"
     except requests.exceptions.ConnectionError as errc:

@@ -11,10 +11,10 @@ from app.LineMonitoring.model.CamSwitch import CamSwitch
 from app.LineMonitoring.model.Sensor import Sensor
 from app.LineMonitoring.render.render import RenderingDataThread
 from core.app_provider.api.get import get_from_site_db
-from core.config.Config import MainGetSensorURL, SensorGetTimeout, SensorDBPath, SensorONOFFTime, time_format, \
+from core.config.Config import main_get_sensor_url, sensor_get_timeout, sensor_db_path, sensor_on_off_time, time_format, \
     sensor_table_name, switch_table_name
-from core.config.Config import MainGetSwitchURL, SwitchGetTimeout, SwitchDBPath
-from core.config.Config import TimeDelayMainLoop
+from core.config.Config import main_get_switch_url, switch_get_timeout, switch_db_path
+from core.config.Config import time_delay_main_loop
 from core.theme.pic import Pics
 
 
@@ -45,16 +45,16 @@ class LineMonitoring:
         now = datetime.now()
         while True:
             sleep(5)
-            if (datetime.now() - now).seconds > SensorONOFFTime:
+            if (datetime.now() - now).seconds > sensor_on_off_time:
                 now = datetime.now()
                 for s in self.sensors:
                     if s.OffTime:
                         ll_temp = s.LastLog
                         if not ll_temp == None:
-                            diff = (now + timedelta(seconds=TimeDelayMainLoop)) - ll_temp
+                            diff = (now + timedelta(seconds=time_delay_main_loop)) - ll_temp
                             now_te = JalaliDateTime.to_jalali(ll_temp)
                             if s.Active:
-                                if diff.days or (diff.seconds > (s.OffTime * 60 + TimeDelayMainLoop)):
+                                if diff.days or (diff.seconds > (s.OffTime * 60 + time_delay_main_loop)):
                                     s.send_activity(False, ll_temp.strftime(time_format))
 
                             if s.OffTime_Bale:
@@ -90,8 +90,8 @@ class LineMonitoring:
             self.RDThread.restart_thread()
 
     def create_sensors(self):
-        sensor_db = TinyDB(SensorDBPath).table(sensor_table_name)
-        switch_db = TinyDB(SwitchDBPath).table(switch_table_name)
+        sensor_db = TinyDB(sensor_db_path).table(sensor_table_name)
+        switch_db = TinyDB(switch_db_path).table(switch_table_name)
         # TODO:check konim bebinim hatman age data base haw khali bashi chi mishe error mdie ya na
 
         r = sensor_db.all()
@@ -106,11 +106,11 @@ class LineMonitoring:
 
     @staticmethod
     def read_all_switch_data():
-        get_from_site_db(MainGetSwitchURL, SwitchGetTimeout, SwitchDBPath, switch_table_name)
+        get_from_site_db(main_get_switch_url, switch_get_timeout, switch_db_path, switch_table_name)
 
     @staticmethod
     def read_all_sensor_data():
-        get_from_site_db(MainGetSensorURL, SensorGetTimeout, SensorDBPath, sensor_table_name)
+        get_from_site_db(main_get_sensor_url, sensor_get_timeout, sensor_db_path, sensor_table_name)
 
     def check(self):
         if not (self.RDThread.Thread.is_alive()):

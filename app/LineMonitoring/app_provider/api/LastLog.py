@@ -2,20 +2,20 @@ from datetime import datetime
 
 from tinydb import TinyDB, Query
 
-from core.config.Config import LastLogDBPath, time_format
+from core.config.Config import last_log_db_path, time_format
 
 LogProp = Query()
 
 
 def update(Sensor_id):
-    LastLogDB = TinyDB(LastLogDBPath).table('LastLog')
+    LastLogDB = TinyDB(last_log_db_path).table('LastLog')
     now = datetime.now()
     now = now.strftime(time_format)
     LastLogDB.upsert({'Sensor_id': str(Sensor_id), 'Last_Time': str(now)}, LogProp.Sensor_id == str(Sensor_id))
 
 
 def get(Sensor_id):
-    LastLogDB = TinyDB(LastLogDBPath).table('LastLog')
+    LastLogDB = TinyDB(last_log_db_path).table('LastLog')
     sea = LastLogDB.get(LogProp.Sensor_id == str(Sensor_id))
     if sea is None:
         return sea

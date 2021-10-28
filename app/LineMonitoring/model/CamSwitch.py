@@ -2,7 +2,7 @@ from datetime import datetime
 
 from tinydb import TinyDB, Query
 
-from core.config.Config import SwitchDBPath, OFFCamSwitchValue, ONCamSwitchValue, time_format, switch_table_name
+from core.config.Config import switch_db_path, off_cam_switch_value, on_cam_switch_value, time_format, switch_table_name
 from core.model.DataType import switch_activity_data, switch_activity_app, switch_activity_class, switch_activity_method
 
 
@@ -26,9 +26,9 @@ class CamSwitch:
     def send(self, value):
         bale_report_flag = False
         sms_report_flag = False
-        if value == OFFCamSwitchValue:
+        if value == off_cam_switch_value:
             value = 0
-        if value == ONCamSwitchValue:
+        if value == on_cam_switch_value:
             value = 1
 
         self.SenderQ.put(
@@ -42,9 +42,9 @@ class CamSwitch:
     def update(self, switch_id=0):
         if switch_id == 0:
             switch_id = self.Switch_id
-        SwitchProp = Query()
-        SwitchDB = TinyDB(SwitchDBPath).table(switch_table_name)
-        sea = SwitchDB.search(SwitchProp.id == switch_id)
+        prop = Query()
+        switch_db = TinyDB(switch_db_path).table(switch_table_name)
+        sea = switch_db.search(prop.id == switch_id)
         sea = sea[0]
         self.PLC_id = int(sea["PLC_id"])
         self.label = sea["label"]

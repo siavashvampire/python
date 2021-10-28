@@ -1,7 +1,7 @@
 import os
 
 from app.ResourcePath.app_provider.admin.main import resource_path
-from core.config.Config import HelpFileName
+from core.config.Config import help_file_name
 
 TextPath = "File/Text/"
 
@@ -32,7 +32,7 @@ AccessOFFText = f.readline()
 
 f.close()
 
-TextFileName = HelpFileName + ".txt"
+TextFileName = help_file_name + ".txt"
 f = open(TextFileName, "r", encoding='utf-8')
 HelpText = f.read()
 

@@ -5,7 +5,7 @@ from threading import Thread
 import app.Logging.app_provider.admin.MersadLogging as Logging
 from app.shift.model.Day import isDayUpdated, adminDayCounter
 from core.app_provider.api.get import site_connection
-from core.config.Config import MainCronShiftURL, CronJobTimeout, MainCronDayURL, ShiftCheckTime
+from core.config.Config import main_cronjob_update_shift_url, cronjob_timeout, main_cronjob_update_day_url, shift_check_time
 
 
 class Cronjob:
@@ -21,7 +21,7 @@ class Cronjob:
         while True:
             sleep(5)
             try:
-                if (datetime.now() - self.last_check).seconds > ShiftCheckTime:
+                if (datetime.now() - self.last_check).seconds > shift_check_time:
                     self.sender_state_func(state=False, program=True)
                     self.update_shift()
                     self.update_day()
@@ -43,11 +43,11 @@ class Cronjob:
 
     @staticmethod
     def update_shift():
-        site_connection(MainCronShiftURL, CronJobTimeout)
+        site_connection(main_cronjob_update_shift_url, cronjob_timeout)
 
     @staticmethod
     def update_day():
-        site_connection(MainCronDayURL, CronJobTimeout)
+        site_connection(main_cronjob_update_day_url, cronjob_timeout)
 
     def restart_thread(self):
         if not (self.Thread.is_alive()):

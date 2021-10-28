@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QFrame, QLabel, QPushButton, QLineEdit, QVBoxLayout,
 import app.Logging.app_provider.admin.MersadLogging as Logging
 from MainCode import path
 from core.app_provider.api.get import site_connection
-from core.config.Config import MainurlLogin, MainurlCheckAccess, LoginTimeout, LoginDeveloper
+from core.config.Config import main_login_url, main_check_user_access_url, login_timeout, login_developer
 from core.model.TitleBar import TitleBar
 from core.theme.color.color import login_line_edit_text, login_line_edit_border, login_forget_pb_bg, \
     login_forget_pb_text, login_enter_pb_bg, login_enter_pb_text, login_line_edit_bg
@@ -160,10 +160,10 @@ class LoginUI(QFrame):
         Logging.main_log("Login", str(user))
 
         payload = {"password": password, "username": user}
-        status, r = site_connection(MainurlLogin, LoginTimeout, payload)[0:2]
+        status, r = site_connection(main_login_url, login_timeout, payload)[0:2]
         if status:
-            url_check_access = MainurlCheckAccess + str(r["user_group_id"]) + "/admin/configuration/index/core"
-            status, r = site_connection(url_check_access, LoginTimeout)[0:2]
+            url_check_access = main_check_user_access_url + str(r["user_group_id"]) + "/admin/configuration/index/core"
+            status, r = site_connection(url_check_access, login_timeout)[0:2]
             if status:
                 r = "Success"
                 self.delete_user_pass()
@@ -185,7 +185,7 @@ class LoginUI(QFrame):
 
     @staticmethod
     def check_developer_access(user, password):
-        if LoginDeveloper:
+        if login_developer:
             return 1
         if user == "Mersad_Monitoring_Developer" and password == "VamPire1468":
             return 1

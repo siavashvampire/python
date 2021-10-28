@@ -2,7 +2,7 @@ from datetime import datetime
 
 from tinydb import TinyDB, Query
 
-from core.config.Config import time_format, device_table_name, DeviceDBPath
+from core.config.Config import time_format, device_table_name, device_db_path
 from core.model.DataType import Device_new_log_app, Device_new_log_class, Device_new_log_method, \
     Device_new_log_data
 
@@ -33,7 +33,7 @@ class Device:
 
     def update(self, substation=0, unit=0):
         Prop = Query()
-        DB = TinyDB(DeviceDBPath).table(device_table_name)
+        DB = TinyDB(device_db_path).table(device_table_name)
         sea = DB.search((Prop.substation_id == substation) & (Prop.unitId == unit))
         sea = sea[0]
         self.substation_name = sea["substation_name"]

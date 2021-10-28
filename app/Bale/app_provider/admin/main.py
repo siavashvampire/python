@@ -19,8 +19,8 @@ from core.RH.ResponseHandler import CounterResponseHandler as RHCounter
 from core.RH.ResponseHandler import GetActivityeHandler
 from core.RH.ResponseHandler import PhoneNumberResponseHandler as RHPhone
 from core.app_provider.api.get import site_connection, get_from_site_db
-from core.config.Config import BaleToken, Bale_Base_URL, PhoneDBPath, SMSPhoneDBPath, MainGetActivityURL, \
-    MainGetCounterURL, MainExportURL, BaleGetTimeout, HelpFileName, HelpPDFTimeOut, LoginDeveloper, get_phones_url, \
+from core.config.Config import bale_token, bale_base_url, phone_db_path, sms_phone_db_path, main_get_activity_url, \
+    main_get_counter_url, main_export_url, bale_get_timeout, help_file_name, help_pdf_timeout, login_developer, get_phones_url, \
     phones_get_timeout, phone_table_name, sms_phone_table_name, get_sms_phones_url
 from core.model.DataType import bale_data, bale_app_name
 from core.theme.pic import Pics
@@ -46,7 +46,7 @@ def get_online_counter(units, phase):
             payload = "unitId=(" + ",".join([str(item) for item in units]) + ")&phase=(" + ",".join(
                 [str(item) for item in phase]) + ")"
 
-        status, r = site_connection(MainGetCounterURL, BaleGetTimeout, data=payload, header=headers)[0:2]
+        status, r = site_connection(main_get_counter_url, bale_get_timeout, data=payload, header=headers)[0:2]
 
         if not status:
             Logging.bale_log("Counter", str(r))
@@ -72,7 +72,7 @@ def get_sensor_activity(units, phase):
         elif not (units is True) and not (phase is True):
             payload = "unitId=(" + ",".join([str(item) for item in units]) + ")&phase=(" + ",".join(
                 [str(item) for item in phase]) + ")"
-        status, r = site_connection(MainGetActivityURL, BaleGetTimeout, data=payload, header=headers)[0:2]
+        status, r = site_connection(main_get_activity_url, bale_get_timeout, data=payload, header=headers)[0:2]
 
         if not status:
             Logging.bale_log("GetSensorActivity", str(r))
@@ -94,7 +94,7 @@ class BaleMain:
         self.data_type = bale_data
         self.thread_label = thread_label
         self.sender_queue = sender_queue
-        self.updater = Updater(token=BaleToken, base_url=Bale_Base_URL)
+        self.updater = Updater(token=bale_token, base_url=bale_base_url)
         dp = self.updater.dispatcher
         self.TextQ = Queue()
         self.create_phones()
@@ -123,8 +123,8 @@ class BaleMain:
         Logging.bale_log("Bale Init", "SendThread is run")
 
     def create_phones(self):
-        r = TinyDB(PhoneDBPath).table(phone_table_name).all()
-        phones = TinyDB(SMSPhoneDBPath).table(sms_phone_table_name).all()
+        r = TinyDB(phone_db_path).table(phone_table_name).all()
+        phones = TinyDB(sms_phone_db_path).table(sms_phone_table_name).all()
         self.phones_bale = [Phones(i["Name"], i["id"], i["SendONOFF"], i["Units"], i["phase"], i["Access"]) for i in r]
         self.phones_SMS = [SMSPhones(i["Name"], i["Phone"], i["Units"], i["phase"], i["Access"]) for i in phones]
 
@@ -147,7 +147,7 @@ class BaleMain:
                                         except:
                                             self.Flag_Bale = False
                                             Logging.bale_log("Send Thread", "Error in send with id " + str(i.id))
-                                            if LoginDeveloper:
+                                            if login_developer:
                                                 print("Error in send with id " + str(i.id))
                     if choose == 2:
                         for phone in self.phones_SMS:
@@ -162,7 +162,7 @@ class BaleMain:
                                         self.Flag_Bale = False
                                         Logging.bale_log("Send Thread",
                                                          "Error in send SMS with Number " + str(phone.Phone))
-                                        if LoginDeveloper:
+                                        if login_developer:
                                             print("Error in send SMS with Phone " + str(phone.Phone))
                 else:
                     if stop_thread():
@@ -288,7 +288,7 @@ class BaleMain:
                 'cache-control': "no-cache",
                 'postman-token': "5d696566-cf4e-c868-37af-e4888d8ba255"
             }
-            status, r = site_connection(MainExportURL, BaleGetTimeout * 2, data=payload, header=headers)[0:2]
+            status, r = site_connection(main_export_url, bale_get_timeout * 2, data=payload, header=headers)[0:2]
             bot.delete_message(id_temp, s['message_id'])
 
             # if acc.CheckDeveloperAccess():
@@ -328,7 +328,7 @@ class BaleMain:
                 'cache-control': "no-cache",
                 'postman-token': "5d696566-cf4e-c868-37af-e4888d8ba255"
             }
-            status, r = site_connection(MainExportURL, BaleGetTimeout * 2, data=payload, header=headers)[0:2]
+            status, r = site_connection(main_export_url, bale_get_timeout * 2, data=payload, header=headers)[0:2]
             bot.delete_message(id_temp, s['message_id'])
 
             # if acc.CheckDeveloperAccess():
@@ -365,7 +365,7 @@ class BaleMain:
                 'cache-control': "no-cache",
                 'postman-token': "5d696566-cf4e-c868-37af-e4888d8ba255"
             }
-            status, r = site_connection(MainExportURL, BaleGetTimeout * 2, data=payload, header=headers)[0:2]
+            status, r = site_connection(main_export_url, bale_get_timeout * 2, data=payload, header=headers)[0:2]
             bot.delete_message(id_temp, s['message_id'])
 
             # if acc.CheckDeveloperAccess():
@@ -402,7 +402,7 @@ class BaleMain:
                 'cache-control': "no-cache",
                 'postman-token': "5d696566-cf4e-c868-37af-e4888d8ba255"
             }
-            status, r = site_connection(MainExportURL, BaleGetTimeout * 2, data=payload, header=headers)[0:2]
+            status, r = site_connection(main_export_url, bale_get_timeout * 2, data=payload, header=headers)[0:2]
             bot.delete_message(id_temp, s['message_id'])
 
             # if acc.CheckDeveloperAccess():
@@ -432,8 +432,8 @@ class BaleMain:
         if type(acc) == Phones:
             try:
                 s = update.message.reply_text(text=SendingHelpText)
-                update.message.reply_document(document=open(file=HelpFileName + ".pdf", mode='rb'),
-                                              timeout=HelpPDFTimeOut)
+                update.message.reply_document(document=open(file=help_file_name + ".pdf", mode='rb'),
+                                              timeout=help_pdf_timeout)
                 bot.delete_message(id_temp, s['message_id'])
             except Exception as e:
                 if acc.check_developer_access():
@@ -632,11 +632,11 @@ class BaleMain:
 
     @staticmethod
     def read_all_sms_phone():
-        get_from_site_db(get_sms_phones_url, phones_get_timeout, SMSPhoneDBPath, sms_phone_table_name)
+        get_from_site_db(get_sms_phones_url, phones_get_timeout, sms_phone_db_path, sms_phone_table_name)
 
     @staticmethod
     def read_all_phone():
-        get_from_site_db(get_phones_url, phones_get_timeout, PhoneDBPath, phone_table_name)
+        get_from_site_db(get_phones_url, phones_get_timeout, phone_db_path, phone_table_name)
 
     def db_update_all(self):
         self.read_all_phone()

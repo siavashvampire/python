@@ -3,9 +3,11 @@ from datetime import datetime
 from tinydb import TinyDB, Query
 
 import app.LineMonitoring.app_provider.api.LastLog as LastLog
-from core.config.Config import SensorDBPath, time_format, sensor_table_name
+from core.config.Config import sensor_db_path, time_format, sensor_table_name
 from core.model.DataType import sensor_new_log_data, sensor_activity_data, sensor_activity_app, \
     sensor_activity_class, sensor_activity_method, sensor_new_log_app, sensor_new_log_class, sensor_new_log_method
+
+from core.theme.pic import Pics
 
 
 class Sensor:
@@ -38,7 +40,6 @@ class Sensor:
             self.update(self.sensor_id)
 
         if self.doc_id < 9 and self.doc_id and ui is not None:
-            from core.theme.pic import Pics
             self.lbl_Data_Name = ui.lbl_Data_Name[self.doc_id - 1]
             self.lbl_Data = ui.lbl_Data[self.doc_id - 1]
             self.lbl_Data_Status = ui.lbl_Data_Status[self.doc_id - 1]
@@ -57,8 +58,8 @@ class Sensor:
             self.lbl_Status = ""
 
     def send(self, value):
-        BaleReportFlag = False
-        SMSReportFlag = False
+        bale_report_flag = False
+        sms_report_flag = False
         now = datetime.now().strftime(time_format)
 
         self.SenderQ.put(
@@ -74,20 +75,20 @@ class Sensor:
             self.send_activity(True, now)
         if not self.Active_Bale:
             self.Active_Bale = True
-            BaleReportFlag = True
+            bale_report_flag = True
         if not self.Active_SMS:
             self.Active_SMS = True
-            SMSReportFlag = True
+            sms_report_flag = True
         if not self.lbl_Data_Name == "":
             self.lbl_Data.setText(str(value))
-        return BaleReportFlag, SMSReportFlag
+        return bale_report_flag, sms_report_flag
 
     def update(self, sensor_id=0):
         if sensor_id == 0:
             sensor_id = self.sensor_id
-        SensorProp = Query()
-        SensorDB = TinyDB(SensorDBPath).table(sensor_table_name)
-        sea = SensorDB.search(SensorProp.id == sensor_id)
+        prop = Query()
+        sensor_db = TinyDB(sensor_db_path).table(sensor_table_name)
+        sea = sensor_db.search(prop.id == sensor_id)
         sea = sea[0]
         self.PLC_id = int(sea["PLC_id"])
         self.counter = sea["tile_Count"]
@@ -104,9 +105,9 @@ class Sensor:
         self.phase = sea["phase"]
         self.unit = sea["unit"]
         self.doc_id = sea.doc_id
-        LTime = LastLog.get(self.sensor_id)
-        if LTime is not None:
-            self.LastLog = datetime.strptime(LTime, time_format)
+        last_time = LastLog.get(self.sensor_id)
+        if last_time is not None:
+            self.LastLog = datetime.strptime(last_time, time_format)
         else:
             self.LastLog = None
 

@@ -1,6 +1,6 @@
 from tinydb import TinyDB, Query
 
-from core.config.Config import PhoneDBPath, phone_table_name
+from core.config.Config import phone_db_path, phone_table_name
 
 
 class PhoneData:
@@ -14,7 +14,7 @@ class PhoneData:
 
     def on_off_active(self, send_on_off):
         self.SendONOFF = send_on_off
-        phone_db = TinyDB(PhoneDBPath).table(phone_table_name)
+        phone_db = TinyDB(phone_db_path).table(phone_table_name)
         phone_prop = Query()
         phone_db.update({'SendONOFF': send_on_off}, phone_prop.id == self.id)
 
@@ -57,7 +57,7 @@ class PhoneData:
 
     def set_access(self, value):
         self.Access = int(value)
-        phone_db = TinyDB(PhoneDBPath).table(phone_table_name)
+        phone_db = TinyDB(phone_db_path).table(phone_table_name)
         phone_prop = Query()
         phone_db.update({'Access': value}, phone_prop.id == self.id)
 

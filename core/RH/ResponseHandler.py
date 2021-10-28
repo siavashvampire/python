@@ -1,7 +1,7 @@
 from tinydb import TinyDB, Query
 
 from app.LineMonitoring.app_provider.api.ReadText import CounterResponseText, ActivityResponseText
-from core.config.Config import PhoneDBPath, NForSendList, phone_table_name
+from core.config.Config import phone_db_path, count_for_send_list, phone_table_name
 
 
 def get_rh(r, status_code, db_path, table_name):
@@ -37,7 +37,7 @@ def get_rh(r, status_code, db_path, table_name):
 def PhoneNumberResponseHandler(Name, phone_id):
     insertflag = False
     PhoneProp = Query()
-    PhoneDB = TinyDB(PhoneDBPath).table(phone_table_name)
+    PhoneDB = TinyDB(phone_db_path).table(phone_table_name)
     sea = PhoneDB.search(PhoneProp.id == phone_id)
     if (sea == []):
         PhoneDB.insert({'Name': str(Name), 'id': phone_id, 'SendONOFF': 1, 'Access': 0, 'Units': [0], 'phase': [0]})
@@ -94,7 +94,7 @@ def send_data(r, status):
     index = 0
     if status in [200, 204, 205]:
         good = True
-        index = NForSendList
+        index = count_for_send_list
         r = ""
     elif status == 400:
         r = r["message"]

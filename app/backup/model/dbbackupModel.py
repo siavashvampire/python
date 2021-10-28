@@ -3,13 +3,13 @@ import zipfile
 import os
 from PyQt5.QtWidgets import QFileDialog
 from datetime import datetime
-from core.config.Config import SystemVersion, DBusername, DBpassword, database, Costumer, RemoveDB, time_format
+from core.config.Config import system_version, db_username, db_password, database, costumer, remove_db_flag, time_format
 import app.Logging.app_provider.admin.MersadLogging as Logging
 
 
 class BackupModel:
     def __init__(self, DBid=0, Path="C:\Mersad Monitoring/backup/", FileName="SQLBackup", Name="", Time=12,
-                 username=DBusername, password=DBpassword, database=database, UI=None, LastBackup=None, queue=None):
+                 username=db_username, password=db_password, database=database, UI=None, LastBackup=None, queue=None):
         self.Path = Path
         self.FileName = FileName
         self.Name = Name
@@ -56,7 +56,7 @@ class BackupModel:
             FileNameExtension = ".sql"
             self.updateTime()
             FilePathTemp = self.Path + "/" + self.FileName + '_' + self.LastBackup.strftime('%y-%m-%d')
-            if RemoveDB:
+            if remove_db_flag:
                 for root, dirs, files in os.walk(self.Path + "/"):
                     for file in files:
                         if file.endswith(FileNameExtension) or file.endswith('.zip'):
@@ -75,13 +75,13 @@ class BackupModel:
                 output.write(self.LastBackup.strftime(time_format))
                 output.write('\n')
                 output.write('-- ')
-                output.write(SystemVersion)
+                output.write(system_version)
                 output.write('\n')
                 output.write('-- Company: Mersad')
                 output.write('\n')
                 output.write('-- Database: ' + self.database)
                 output.write('\n')
-                output.write('-- Costumer: ' + Costumer)
+                output.write('-- Costumer: ' + costumer)
                 output.write('\n')
                 output.write('\n')
                 output.write('-- ------------------------------------------------------')

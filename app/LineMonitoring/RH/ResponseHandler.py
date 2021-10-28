@@ -1,7 +1,7 @@
 from tinydb import TinyDB, Query
 
 from app.LineMonitoring.app_provider.api.ReadText import CounterResponseText, ActivityResponseText
-from core.config.Config import PhoneDBPath
+from core.config.Config import phone_db_path
 
 
 def CounterResponseHandler(r, status_code):
@@ -23,7 +23,7 @@ def CounterResponseHandler(r, status_code):
 
 def PhoneNumberResponseHandler(Name, id):
     PhoneProp = Query()
-    PhoneDB = TinyDB(PhoneDBPath).table(phone_table_name)
+    PhoneDB = TinyDB(phone_db_path).table(phone_table_name)
 
     sea = PhoneDB.search(PhoneProp.id == id)
     if (sea == []):
