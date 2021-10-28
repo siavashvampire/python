@@ -14,22 +14,22 @@ class TableWidget(QTableWidget):
         self.horizontalHeader().setDefaultSectionSize(250)
         self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
 
-    def _addRow(self):
-        rowCount = self.rowCount()
-        self.insertRow(rowCount)
+    def add_row(self):
+        row_count = self.rowCount()
+        self.insertRow(row_count)
 
-    def _removeRow(self):
+    def remove_row(self):
         if self.rowCount() > 0:
             self.removeRow(self.rowCount() - 1)
 
-    def _copyRow(self):
+    def copy_row(self):
         self.insertRow(self.rowCount())
-        rowCount = self.rowCount()
-        columnCount = self.columnCount()
+        row_count = self.rowCount()
+        column_count = self.columnCount()
 
-        for j in range(columnCount):
-            if not self.item(rowCount - 2, j) is None:
-                self.setItem(rowCount - 1, j, QTableWidgetItem(self.item(rowCount - 2, j).text()))
+        for j in range(column_count):
+            if not self.item(row_count - 2, j) is None:
+                self.setItem(row_count - 1, j, QTableWidgetItem(self.item(row_count - 2, j).text()))
 
 
 class AppDemo(QWidget):
@@ -37,25 +37,25 @@ class AppDemo(QWidget):
         super().__init__()
         self.resize(1600, 600)
 
-        mainLayout = QHBoxLayout()
+        main_layout = QHBoxLayout()
         table = TableWidget()
-        mainLayout.addWidget(table)
-        buttonLayout = QVBoxLayout()
+        main_layout.addWidget(table)
+        button_layout = QVBoxLayout()
 
         button_new = QPushButton('New')
-        button_new.clicked.connect(table._addRow)
-        buttonLayout.addWidget(button_new)
+        button_new.clicked.connect(table.add_row)
+        button_layout.addWidget(button_new)
 
         button_copy = QPushButton('Copy')
-        button_copy.clicked.connect(table._copyRow)
-        buttonLayout.addWidget(button_copy)
+        button_copy.clicked.connect(table.copy_row)
+        button_layout.addWidget(button_copy)
 
         button_remove = QPushButton('Remove')
-        button_remove.clicked.connect(table._removeRow)
-        buttonLayout.addWidget(button_remove, alignment=Qt.AlignTop)
+        button_remove.clicked.connect(table.remove_row)
+        button_layout.addWidget(button_remove, alignment=Qt.AlignTop)
 
-        mainLayout.addLayout(buttonLayout)
-        self.setLayout(mainLayout)
+        main_layout.addLayout(button_layout)
+        self.setLayout(main_layout)
 
 
 app = QApplication(sys.argv)
