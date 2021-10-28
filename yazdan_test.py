@@ -4,20 +4,28 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QHeaderView, QAbstractItemView, QPushButton, QTableWidget, \
     QTableWidgetItem, QVBoxLayout, QHBoxLayout
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
+
+
+def add_table_row(table, row_data):
+    row = table.rowCount()
+    table.setRowCount(row + 1)
+    col = 0
+    for item in row_data:
+        cell = QTableWidgetItem(str(item))
+        table.setItem(row, col, cell)
+        col += 1
 
 
 class TableWidget(QTableWidget):
     def __init__(self):
         super().__init__()
-        # self.setHorizontalHeaderLabels(list('ABCDE'))
         self.verticalHeader().setDefaultSectionSize(50)
         self.horizontalHeader().setDefaultSectionSize(250)
         self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
 
     def add_row(self):
-        row_count = self.rowCount()
-        self.insertRow(row_count)
+        # row_count = self.rowCount()
+        add_table_row(self, ["X15", "ON"])
 
     def remove_row(self):
         if self.rowCount() > 0:
@@ -48,8 +56,6 @@ class AppDemo(QWidget):
         for i, (name, code) in enumerate(inputs):
             item_name = QTableWidgetItem(name)
             item_code = QTableWidgetItem(code)
-            # item_color = QTableWidgetItem()
-            # item_color.setBackground(get_rgb_from_hex(code))
             table.setItem(i, 0, item_name)
             table.setItem(i, 1, item_code)
 
