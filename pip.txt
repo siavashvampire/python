@@ -8,3 +8,4 @@ pip install persiantools
 pip install pyModbusTCP
 pip install pandas
 pip install PyQt5Designer
+pip install PyQt5-stubs==5.15.2.0
