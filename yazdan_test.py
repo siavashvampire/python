@@ -4,6 +4,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QHeaderView, QAbstractItemView, QPushButton, QTableWidget, \
     QTableWidgetItem, QVBoxLayout, QHBoxLayout
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor
 
 
 class TableWidget(QTableWidget):
@@ -39,6 +40,20 @@ class AppDemo(QWidget):
 
         main_layout = QHBoxLayout()
         table = TableWidget()
+
+        table.setRowCount(len(colors))
+        table.setColumnCount(len(colors[0]) + 1)
+        table.setHorizontalHeaderLabels(["Name", "Hex Code", "Color"])
+
+        for i, (name, code) in enumerate(colors):
+            item_name = QTableWidgetItem(name)
+            item_code = QTableWidgetItem(code)
+            item_color = QTableWidgetItem()
+            item_color.setBackground(get_rgb_from_hex(code))
+            table.setItem(i, 0, item_name)
+            table.setItem(i, 1, item_code)
+            table.setItem(i, 2, item_color)
+
         main_layout.addWidget(table)
         button_layout = QVBoxLayout()
 
@@ -57,6 +72,21 @@ class AppDemo(QWidget):
         main_layout.addLayout(button_layout)
         self.setLayout(main_layout)
 
+
+def get_rgb_from_hex(code):
+    code_hex = code.replace("#", "")
+    rgb = tuple(int(code_hex[i:i + 2], 16) for i in (0, 2, 4))
+    return QColor.fromRgb(rgb[0], rgb[1], rgb[2])
+
+
+colors = [("Red", "#FF0000"),
+          ("Green", "#00FF00"),
+          ("Blue", "#0000FF"),
+          ("Black", "#000000"),
+          ("White", "#FFFFFF"),
+          ("Electric Green", "#41CD52"),
+          ("Dark Blue", "#222840"),
+          ("Yellow", "#F9E56d")]
 
 app = QApplication(sys.argv)
 app.setStyleSheet('QPushButton{font-size: 20px; width: 200px; height: 50px}')
