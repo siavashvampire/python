@@ -20,8 +20,8 @@ from core.RH.ResponseHandler import GetActivityeHandler
 from core.RH.ResponseHandler import PhoneNumberResponseHandler as RHPhone
 from core.app_provider.api.get import site_connection, get_from_site_db
 from core.config.Config import bale_token, bale_base_url, phone_db_path, sms_phone_db_path, main_get_activity_url, \
-    main_get_counter_url, main_export_url, bale_get_timeout, help_file_name, help_pdf_timeout, login_developer, get_phones_url, \
-    phones_get_timeout, phone_table_name, sms_phone_table_name, get_sms_phones_url
+    main_get_counter_url, main_export_url, bale_get_timeout, help_file_name, help_pdf_timeout, login_developer, \
+    get_phones_url, phones_get_timeout, phone_table_name, sms_phone_table_name, get_sms_phones_url
 from core.model.DataType import bale_data, bale_app_name
 from core.theme.pic import Pics
 

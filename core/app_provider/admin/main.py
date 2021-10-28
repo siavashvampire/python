@@ -84,10 +84,10 @@ class Main:
                                 line_monitoring_queue=self.line_monitoring.RDThread.DataQ,
                                 electrical_substation_queue=None)
 
-        self.update_controller = UpdateController(self.line_monitoring.update_system,
-                                                  None,
-                                                  self.bale_org.update_system,
-                                                  self.da_units.update_system)
+        self.update_controller = UpdateController(line_monitoring_update_func=self.line_monitoring.update_system,
+                                                  electrical_update_func=None,
+                                                  bale_org_update_func=self.bale_org.update_system,
+                                                  da_units_update_func=self.da_units.update_system)
 
         self.update_controller.update_queue.put(True)
 

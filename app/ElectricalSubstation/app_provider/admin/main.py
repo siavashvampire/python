@@ -7,6 +7,7 @@ from persiantools.jdatetime import JalaliDateTime
 from tinydb import TinyDB
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
+from app.ElectricalSubstation.model.Device import Device
 from app.ElectricalSubstation.render.render import RenderingDataThread
 from core.app_provider.api.get import get_from_site_db
 from core.config.Config import main_get_sensor_url, sensor_get_timeout, sensor_db_path, sensor_on_off_time, time_format, \

@@ -227,12 +227,12 @@ if developer:
 else:
     main_url = "http://localhost/"
 
-get_sensor_url = "api/sensor"
-get_switch_url = "api/cam_switch"
+get_sensor_url = "api/line_monitoring_update/sensor"
+get_switch_url = "api/line_monitoring_update/cam_switch"
 get_device_url = "api/electrical/device"
-get_da_unit_url = "api/DAUnits"
-get_phones_url = "api/phones"
-get_sms_phones_url = "api/phones"
+get_da_unit_url = "api/DAUnits_update/DAUnits"
+get_phones_url = "api/contacts_update/BaleItems"
+get_sms_phones_url = "api/contacts_update/SmsItems"
 get_admin_day_url = "api/get/adminDayCounter"
 get_is_day_update_url = "api/get/isDayUpdated"
 get_counter_url = "api/get/Counter"

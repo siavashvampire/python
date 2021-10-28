@@ -170,10 +170,10 @@ class LineMonitoring:
         self.thread_label.setIcon(Pics.ON)
 
     def update_system(self, where_should_update):
-        if "TileKindUpdate" in where_should_update:
+        if "sensor_update" in where_should_update:
             self.read_all_switch_data()
             print("omad sensor")
-        if "SwitchKindUpdate" in where_should_update:
+        if "switch_update" in where_should_update:
             self.read_all_sensor_data()
             print("omad switch")
 
