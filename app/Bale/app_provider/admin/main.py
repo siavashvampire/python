@@ -640,6 +640,7 @@ class BaleMain:
         get_from_site_db(main_get_phones_url, phones_get_timeout, phone_db_path, phone_table_name)
 
     def db_update_all(self):
+        #TODO:unit ghalate
         self.read_all_phone()
         self.read_all_sms_phone()
 
