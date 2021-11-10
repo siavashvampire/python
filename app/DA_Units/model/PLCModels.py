@@ -74,6 +74,8 @@ class Delta12SE:
         if self.app_name == "Mersad Monitoring System":
             self.thread_func = self.line_monitoring_read_data_from_plc_thread
 
+        # TODO: age app dg bod chi kar kone??
+
         if messenger_queue is not None:
             self.MessengerQ = messenger_queue
         self.client = ModbusClient(host=self.IP, port=self.Port, auto_open=True, auto_close=False,
