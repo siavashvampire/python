@@ -82,6 +82,7 @@ send_timeout = 200
 check_timeout = 30
 sensor_get_timeout = 10
 switch_get_timeout = 10
+device_get_timeout = 10
 da_units_get_timeout = 10
 phones_get_timeout = 10
 user_timeout = 5
@@ -106,6 +107,7 @@ config_db.update({"send_timeout": str(send_timeout)})
 config_db.update({"check_timeout": str(check_timeout)})
 config_db.update({"sensor_get_timeout": str(sensor_get_timeout)})
 config_db.update({"switch_get_timeout": str(switch_get_timeout)})
+config_db.update({"device_get_timeout": str(device_get_timeout)})
 config_db.update({"da_units_get_timeout": str(da_units_get_timeout)})
 config_db.update({"phones_get_timeout": str(phones_get_timeout)})
 config_db.update({"user_timeout": str(user_timeout)})

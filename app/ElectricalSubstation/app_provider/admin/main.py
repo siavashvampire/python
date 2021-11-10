@@ -11,13 +11,15 @@ from app.ElectricalSubstation.model.Device import Device
 from app.ElectricalSubstation.render.render import RenderingDataThread
 from core.app_provider.api.get import get_from_site_db
 from core.config.Config import main_get_sensor_url, sensor_get_timeout, sensor_db_path, sensor_on_off_time, time_format, \
-    sensor_table_name, switch_table_name
+    sensor_table_name, switch_table_name, device_db_path, device_table_name, main_get_device_url, device_get_timeout
 from core.config.Config import main_get_switch_url, switch_get_timeout, switch_db_path
 from core.config.Config import time_delay_main_loop
 from core.theme.pic import Pics
 
 
 class ElectricalSubstation:
+
+    devices: list[Device]
 
     def __init__(self, messenger_queue, sender_queue, sender_state_func, thread_label, ui):
         self.ui = ui
@@ -35,7 +37,7 @@ class ElectricalSubstation:
         self.Thread = Thread(target=self.electrical_substation,
                              args=(lambda: self.stop_thread,))
         self.Thread.start()
-        self.RDThread = RenderingDataThread(device=self.devices,
+        self.RDThread = RenderingDataThread(devices=self.devices,
                                             ui=self.ui)
 
     def electrical_substation(self, stop_thread):
@@ -53,35 +55,35 @@ class ElectricalSubstation:
                         break
             except:
                 pass
-            if (datetime.now() - now).seconds > sensor_on_off_time:
-                now = datetime.now()
-                for s in self.sensors:
-                    if s.OffTime:
-                        ll_temp = s.LastLog
-                        if not ll_temp == None:
-                            diff = (now + timedelta(seconds=time_delay_main_loop)) - ll_temp
-                            now_te = JalaliDateTime.to_jalali(ll_temp)
-                            if s.Active:
-                                if diff.days or (diff.seconds > (s.OffTime * 60 + time_delay_main_loop)):
-                                    s.send_activity(False, ll_temp.strftime(time_format))
-
-                            if s.OffTime_Bale:
-                                if s.Active_Bale:
-                                    if diff.days or diff.seconds > s.OffTime_Bale * 60:
-                                        s.Active_Bale = False
-                                        if self.ui.Setting.baleONOFFSendFlag.isChecked():
-                                            if self.ui.Setting.baleONOFFFlag.isChecked():
-                                                print("off Sensor {} send".format(s.sensor_id))
-                                            off_sensor_bale_text = str(s.label) + " فاز " + str(s.phaseLabel) + str(
-                                                now_te.strftime(' در %y/%m/%d ساعت %H:%M:%S')) + " خاموش شده است"
-                                            self.messenger_queue.put([off_sensor_bale_text, s.unit, s.phase, 1])
-                            if s.OffTime_SMS:
-                                if s.Active_SMS:
-                                    if diff.days or diff.seconds > s.OffTime_SMS * 60:
-                                        s.Active_SMS = False
-                                        off_sensor_sms_text = str(s.label) + " فاز " + str(s.phaseLabel) + str(
-                                            now_te.strftime(' در %y/%m/%d ساعت %H:%M:%S')) + " خاموش شده است"
-                                        self.messenger_queue.put([off_sensor_sms_text, s.unit, s.phase, 2])
+            # if (datetime.now() - now).seconds > sensor_on_off_time:
+            #     now = datetime.now()
+            #     for s in self.sensors:
+            #         if s.OffTime:
+            #             ll_temp = s.LastLog
+            #             if not ll_temp == None:
+            #                 diff = (now + timedelta(seconds=time_delay_main_loop)) - ll_temp
+            #                 now_te = JalaliDateTime.to_jalali(ll_temp)
+            #                 if s.Active:
+            #                     if diff.days or (diff.seconds > (s.OffTime * 60 + time_delay_main_loop)):
+            #                         s.send_activity(False, ll_temp.strftime(time_format))
+            #
+            #                 if s.OffTime_Bale:
+            #                     if s.Active_Bale:
+            #                         if diff.days or diff.seconds > s.OffTime_Bale * 60:
+            #                             s.Active_Bale = False
+            #                             if self.ui.Setting.baleONOFFSendFlag.isChecked():
+            #                                 if self.ui.Setting.baleONOFFFlag.isChecked():
+            #                                     print("off Sensor {} send".format(s.sensor_id))
+            #                                 off_sensor_bale_text = str(s.label) + " فاز " + str(s.phaseLabel) + str(
+            #                                     now_te.strftime(' در %y/%m/%d ساعت %H:%M:%S')) + " خاموش شده است"
+            #                                 self.messenger_queue.put([off_sensor_bale_text, s.unit, s.phase, 1])
+            #                 if s.OffTime_SMS:
+            #                     if s.Active_SMS:
+            #                         if diff.days or diff.seconds > s.OffTime_SMS * 60:
+            #                             s.Active_SMS = False
+            #                             off_sensor_sms_text = str(s.label) + " فاز " + str(s.phaseLabel) + str(
+            #                                 now_te.strftime(' در %y/%m/%d ساعت %H:%M:%S')) + " خاموش شده است"
+            #                             self.messenger_queue.put([off_sensor_sms_text, s.unit, s.phase, 2])
 
     def restart_thread(self):
         if not (self.Thread.is_alive()):
@@ -94,18 +96,19 @@ class ElectricalSubstation:
             self.RDThread.restart_thread()
 
     def create_devices(self):
-        devices_db = TinyDB(sensor_db_path).table(sensor_table_name)
+        devices_db = TinyDB(device_db_path).table(device_table_name)
         # TODO:check konim bebinim hatman age data base haw khali bashi chi mishe error mdie ya na
 
         devices = devices_db.all()
-        self.devices = [Device(switch_id=int(i["id"]), sender_queue=self.ArchiveQ) for i in devices]
+        self.devices = [Device(substation=int(i["substation_id"]), unit=int(i["unitId"]), sender_queue=self.ArchiveQ)
+                        for i in devices]
 
     def db_update_all(self):
         self.read_all_device_data()
 
     @staticmethod
     def read_all_device_data():
-        get_from_site_db(main_get_switch_url, switch_get_timeout, switch_db_path, switch_table_name)
+        get_from_site_db(main_get_device_url, device_get_timeout, device_db_path, device_table_name)
 
     def check(self):
         if not (self.RDThread.Thread.is_alive()):
@@ -165,7 +168,9 @@ class ElectricalSubstation:
         self.state = True
         self.thread_label.setIcon(Pics.ON)
 
-    def update_system(self, where_should_update):
+    def update_system(self, where_should_update=None):
+        self.read_all_device_data()
+
         if "TileKindUpdate" in where_should_update:
             self.read_all_device_data()
             print("omad sensor")

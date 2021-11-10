@@ -10,6 +10,7 @@ from app.Bale.app_provider.admin.main import BaleMain
 from app.DA_Units.app_provider.admin.main import DAUnits
 from app.DBSender.app_provider.admin.main import DataArchive
 from app.LineMonitoring.app_provider.admin.main import LineMonitoring
+from app.ElectricalSubstation.app_provider.admin.main import ElectricalSubstation
 from app.backup.app_provider.admin.main import BackupMain
 from core.config.Config import db_path, logout_time
 from core.model.Login import LoginUI
@@ -78,14 +79,21 @@ class Main:
                                               thread_label=self.main_ui.Threads.ThS_PLC,
                                               ui=self.main_ui)
 
+        self.start_splash.show_message("starting electrical substation system")
+        self.electrical_substation = ElectricalSubstation(messenger_queue=self.bale_org.TextQ,
+                                                          sender_queue=self.sender_thread.ArchiveQ,
+                                                          sender_state_func=self.sender_thread.state_thread,
+                                                          thread_label=self.main_ui.Threads.ThS_PLC,
+                                                          ui=self.main_ui)
+
         self.start_splash.show_message("initializing DA units system")
         self.da_units = DAUnits(thread_label=self.main_ui.Threads.ThS_PLC,
                                 messenger_q=self.bale_org.TextQ,
                                 line_monitoring_queue=self.line_monitoring.RDThread.DataQ,
-                                electrical_substation_queue=None)
+                                electrical_substation_queue=self.electrical_substation.RDThread.DataQ)
 
         self.update_controller = UpdateController(line_monitoring_update_func=self.line_monitoring.update_system,
-                                                  electrical_update_func=None,
+                                                  electrical_update_func=self.electrical_substation.update_system,
                                                   bale_org_update_func=self.bale_org.update_system,
                                                   da_units_update_func=self.da_units.update_system)
 

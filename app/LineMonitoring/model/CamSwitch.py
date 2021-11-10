@@ -87,7 +87,7 @@ class CamSwitch:
             return 0
 
 
-def find_switch_choose(choose: int, switches: list) -> CamSwitch:
+def find_switch_choose(choose: int, switches: list[CamSwitch]) -> CamSwitch:
     for sw in switches:
         if sw.PLC_id == choose:
             return sw

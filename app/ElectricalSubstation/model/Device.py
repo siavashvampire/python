@@ -21,8 +21,8 @@ class Device:
         self.data_type = Device_new_log_data
         self.sender_queue = sender_queue
 
-        if self.substation:
-            self.update(self.substation)
+        if self.substation and self.unit:
+            self.update(self.substation, self.unit)
 
     def send(self, values):
         self.sender_queue.put(
@@ -35,9 +35,21 @@ class Device:
         Prop = Query()
         DB = TinyDB(device_db_path).table(device_table_name)
         sea = DB.search((Prop.substation_id == substation) & (Prop.unitId == unit))
-        sea = sea[0]
-        self.substation_name = sea["substation_name"]
-        self.name = sea["name"]
-        self.device_type = int(sea["device_type"])
-        self.refresh_time = int(sea["refresh_time"])
-        self.doc_id = sea.doc_id
+        if sea:
+            sea = sea[0]
+            self.substation_name = sea["substation_name"]
+            self.name = sea["Name"]
+            self.device_type = int(sea["deviceType"])
+            self.refresh_time = int(sea["refreshTime"])
+            self.doc_id = sea.doc_id
+        else:
+            # TODO: Ejade log baraye else
+            pass
+
+
+def find_device(substation_id: int, unitId: int, devices: list[Device]) -> Device:
+    for this_device in devices:
+        if this_device.substation == substation_id:
+            if this_device.unit == unitId:
+                print(this_device.substation_name)
+                return Device()

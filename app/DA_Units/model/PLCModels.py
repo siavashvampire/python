@@ -292,7 +292,7 @@ class Delta12SE:
 
 
 class GateWay:
-    def __init__(self, db_id=0, ip="192.168.1.240", port=502, name="", test_port=0, messenger_queue=None,
+    def __init__(self, db_id=0, ip="192.168.1.237", port=502, name="", test_port=0, messenger_queue=None,
                  app_name="ElectricalSubstation_0",
                  line_monitoring_queue=None,
                  electrical_substation_queue=None):
@@ -325,9 +325,11 @@ class GateWay:
         if self.app_name == "Mersad Monitoring System":
             self.thread_func = self.line_monitoring_read_data_from_plc_thread
         elif "ElectricalSubstation" in self.app_name:
+            # print("app_name")
+            # print(self.app_name)
             s = self.app_name.split("_")
             self.app_name = s[0]
-            self.electrical_substation_id = s[1]
+            self.electrical_substation_id = int(s[1])
             self.thread_func = self.electrical_substation_read_data_from_plc_thread
         if messenger_queue is not None:
             self.MessengerQ = messenger_queue
@@ -578,6 +580,9 @@ class GateWay:
                     if data is not None:
                         if data:
                             self.DataCounter += 1
+
+                            # print(self.DataCounter)
+                            # print(data)
                             self.electrical_substation_queue.put([data])
 
                     self.connect()
@@ -591,8 +596,9 @@ class GateWay:
         self.client.unit_id(rs_485_address)
 
         incoming_data_part1 = self.multiple_register_read("holding", 3000, 17, "FLOAT32")
+        # print(incoming_data_part1)
         num = incoming_data_part1[0]
-        if num != num:
+        if not num != num:
             incoming_data_part2 = self.multiple_register_read("holding", 3036, 21, "FLOAT32")
             incoming_data_part3 = self.multiple_register_read("holding", 3078, 8, "4Q_FP_PF")
             incoming_data_part4 = self.multiple_register_read("holding", 3110, 1, "FLOAT32")

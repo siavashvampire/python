@@ -199,7 +199,7 @@ class Sensor:
             return 0
 
 
-def find_sensor_choose(choose: int, sensors: list) -> Sensor:
+def find_sensor_choose(choose: int, sensors: list[Sensor]) -> Sensor:
     for sen in sensors:
         if sen.PLC_id == choose:
             return sen

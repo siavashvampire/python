@@ -2,12 +2,13 @@ from queue import Queue
 from threading import Thread
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
+from app.ElectricalSubstation.model.Device import find_device
 
 
 class RenderingDataThread:
-    def __init__(self, device,  messenger_queue=None,  ui=None):
+    def __init__(self, devices, messenger_queue=None, ui=None):
         self.ui = ui
-        self.device = device
+        self.devices = devices
         self.messenger_queue = messenger_queue
         self.DataQ = Queue()
         self.stop_thread = False
@@ -19,8 +20,12 @@ class RenderingDataThread:
         while True:
             data = self.DataQ.get()
             self.DataQ.task_done()
+
             if data:
+                find_device(substation_id=1, unitId=3, devices=self.devices)
+
                 print(data)
+
             else:
                 if stop_thread():
                     Logging.line_monitoring_log("Main Rendering Thread", "Stop")

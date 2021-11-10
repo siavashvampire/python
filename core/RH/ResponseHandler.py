@@ -24,7 +24,9 @@ def get_rh(r, status_code, db_path, table_name):
             db.close()
             db = TinyDB(db_path).table(table_name)
             for i in r:
-                db.upsert(i, prop.id == i["id"])
+                # db.upsert(i, prop.id == i["id"])
+
+                db.insert(i)
 
         except Exception as e:
             print("bad Response in get_rh")

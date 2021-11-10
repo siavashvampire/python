@@ -56,7 +56,7 @@ class UpdateController:
 
         if app_order[1] in r.keys() and r[app_order[1]] is not None:
             print("elec")
-            # self.electrical_update_func()
+            self.electrical_update_func()
 
         if app_order[2] in r.keys() and r[app_order[2]] is not None:
             print("bale_org")
