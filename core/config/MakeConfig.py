@@ -231,7 +231,7 @@ else:
 
 get_sensor_url = "api/line_monitoring_update/sensor"
 get_switch_url = "api/line_monitoring_update/cam_switch"
-get_device_url = "api/electrical/device"
+get_device_url = "api/electrical_update/device"
 get_da_unit_url = "api/DAUnits_update/DAUnits"
 get_phones_url = "api/contacts_update/BaleItems"
 get_sms_phones_url = "api/contacts_update/SmsItems"
