@@ -24,7 +24,6 @@ class RenderingDataThread:
 
             if data:
                 found_device = find_device(choose, devices=self.devices)
-                print(found_device)
                 found_device.send(data)
 
             else:
