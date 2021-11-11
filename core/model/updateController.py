@@ -48,20 +48,22 @@ class UpdateController:
             return None
 
         r = dict(get[1])
+        keys = r.keys()
         app_order = ["LineMonitoring", "ElectricalSubstation", "contacts", "DAUnits"]
 
-        if app_order[0] in r.keys() and r[app_order[0]] is not None:
-            print("line_monitoring")
+        if app_order[0] in keys and r[app_order[0]] is not None:
+            print("LineMonitoring")
             self.line_monitoring_update_func(r[app_order[0]])
 
-        if app_order[1] in r.keys() and r[app_order[1]] is not None:
-            print("elec")
+        if app_order[1] in keys and r[app_order[1]] is not None:
+            print("ElectricalSubstation")
             self.electrical_update_func()
 
-        if app_order[2] in r.keys() and r[app_order[2]] is not None:
-            print("bale_org")
+        if app_order[2] in keys and r[app_order[2]] is not None:
+            print("contacts")
             self.bale_org_update_func()
 
-        if app_order[3] in r.keys() and r[app_order[3]] is not None:
-            print("da_units")
+        if app_order[3] in keys and r[app_order[3]] is not None:
+            print("DAUnits")
             self.da_units_update_func()
+

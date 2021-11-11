@@ -41,6 +41,7 @@ class DAUnits:
 
             # TODO:bayad joda she bayad jaye all bashe onaie k fght PLC hastan v onaie k fght gateway hastan
             print("PLCsDB Created!")
+            print("{} devices connected".format(len(self.units)))
             for plc in self.units:
                 plc.run_thread()
         else:

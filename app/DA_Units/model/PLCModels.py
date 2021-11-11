@@ -11,6 +11,7 @@ from pyModbusTCP.client import ModbusClient
 from tinydb import TinyDB
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
+from app.ElectricalSubstation.app_provider.admin.main import ElectricalSubstation, get_devices_by_substation_id
 from app.LineMonitoring.app_provider.api.LastLog import getABSecond, getText
 from app.LineMonitoring.app_provider.api.ReadText import PLCConnectBaleText, PLCDisconnectBaleText, VirtualText
 from core.config.Config import da_unit_db_path, modbus_timeout, plc_time_sleep_max, plc_time_sleep_min, \
@@ -40,6 +41,10 @@ def extract_choose(data):
     choose = data % 1000
     data = (data // 1000) * 1000
     return choose, data
+
+
+def electrical_extract_choose(data):
+    return [data['substation_id'], data['unitId']]
 
 
 class Delta12SE:
@@ -330,6 +335,7 @@ class GateWay:
             s = self.app_name.split("_")
             self.app_name = s[0]
             self.electrical_substation_id = int(s[1])
+            self.electrical_devices = get_devices_by_substation_id(self.electrical_substation_id)
             self.thread_func = self.electrical_substation_read_data_from_plc_thread
         if messenger_queue is not None:
             self.MessengerQ = messenger_queue
@@ -366,7 +372,7 @@ class GateWay:
 
     def run_thread(self):
         self.ReadingDataThread.start()
-        print(self.Name)
+        # print(self.Name)
         Logging.da_log("Init PLC " + self.Name, "PLC " + self.Name + " start")
 
     def update(self):
@@ -576,14 +582,22 @@ class GateWay:
                         #     self.PLC_Counter_lbl.setText(str(self.RPS / PLCRefreshTime))
                         self.cal_sleep_time()
 
-                    data = self.electrical_substation_data_from_plc(3)
-                    if data is not None:
-                        if data:
-                            self.DataCounter += 1
+                    for i in self.electrical_devices:
+                        this_unit_id = i.unit
+                        print("requesting data from unit {}".format(this_unit_id))
+                        data = self.electrical_substation_data_from_plc(this_unit_id)
 
-                            # print(self.DataCounter)
-                            # print(data)
-                            self.electrical_substation_queue.put([data])
+                        if data is not None:
+                            if data:
+                                self.DataCounter += 1
+
+                                print("data from unit {}:".format(this_unit_id))
+                                choose = electrical_extract_choose(data)
+
+                                # print(data)
+                                self.electrical_substation_queue.put([choose, data])
+                        else:
+                            print("data from unit {} is None!".format(this_unit_id))
 
                     self.connect()
 
@@ -724,9 +738,10 @@ class GateWay:
                     "Apparent_Energy_Delivered_Phase_C": incoming_data[84]
                 }
 
-                json_data_out = json.dumps(dict_data_out, indent=2)
+                # json_data_out = json.dumps(dict_data_out, indent=2)
 
-                return json_data_out
+                print(dict_data_out)
+                return dict_data_out
 
             except:
                 print("Error in Read Data From PM2100")

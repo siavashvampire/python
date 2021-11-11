@@ -18,13 +18,14 @@ class RenderingDataThread:
 
     def rendering_data(self, stop_thread):
         while True:
-            data = self.DataQ.get()
+            choose, data = self.DataQ.get()
+            # print(data)
             self.DataQ.task_done()
 
             if data:
-                find_device(substation_id=1, unitId=3, devices=self.devices)
-
-                print(data)
+                found_device = find_device(choose, devices=self.devices)
+                print(found_device)
+                found_device.send(data)
 
             else:
                 if stop_thread():

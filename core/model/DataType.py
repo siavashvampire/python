@@ -104,7 +104,8 @@ Device_new_log_data = {"substation_id": None,
                        "Reactive_Energy_Delivered_Phase_B": None,
                        "Reactive_Energy_Delivered_Phase_C": None,
                        "Apparent_Energy_Delivered_Phase_A": None,
-                       "Apparent_Energy_Delivered_Phase_B": None, }
+                       "Apparent_Energy_Delivered_Phase_B": None,
+                       "Apparent_Energy_Delivered_Phase_C": None, }
 Device_new_log_app = 'ElectricalSubstation'
 Device_new_log_class = 'electrical'
 Device_new_log_method = 'newLog'
