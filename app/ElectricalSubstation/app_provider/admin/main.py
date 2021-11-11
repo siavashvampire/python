@@ -4,7 +4,7 @@ from threading import Thread
 from typing import List, Any
 
 from persiantools.jdatetime import JalaliDateTime
-from tinydb import TinyDB
+from tinydb import TinyDB, Query
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
 from app.ElectricalSubstation.model.Device import Device
@@ -18,7 +18,6 @@ from core.theme.pic import Pics
 
 
 class ElectricalSubstation:
-
     devices: list[Device]
 
     def __init__(self, messenger_queue, sender_queue, sender_state_func, thread_label, ui):
@@ -170,9 +169,16 @@ class ElectricalSubstation:
 
     def update_system(self, where_should_update=None):
         self.read_all_device_data()
-
-        if "TileKindUpdate" in where_should_update:
-            self.read_all_device_data()
-            print("omad sensor")
-
+        # if "TileKindUpdate" in where_should_update:
+        #     self.read_all_device_data()
+        #     print("omad sensor")
         self.create_devices()
+
+
+def get_devices_by_substation_id(substation_id: int) -> list[Device]:
+    devices_db = TinyDB(device_db_path).table(device_table_name)
+    devices = devices_db.search(Query().substation_id == substation_id)
+
+    devices_obj = [Device(substation=int(i["substation_id"]), unit=int(i["unitId"]))
+                   for i in devices]
+    return devices_obj
