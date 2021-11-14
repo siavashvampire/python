@@ -1,5 +1,6 @@
 import json
 import threading
+import time
 import winsound
 from datetime import datetime
 from time import sleep
@@ -16,7 +17,8 @@ from app.LineMonitoring.app_provider.api.LastLog import getABSecond, getText
 from app.LineMonitoring.app_provider.api.ReadText import PLCConnectBaleText, PLCDisconnectBaleText, VirtualText
 from core.config.Config import da_unit_db_path, modbus_timeout, plc_time_sleep_max, plc_time_sleep_min, \
     plc_refresh_time, \
-    plc_sleep_time_step_up, plc_sleep_time_step_down, disconnect_alarm_time, send_time_format, da_unit_table_name
+    plc_sleep_time_step_up, plc_sleep_time_step_down, disconnect_alarm_time, send_time_format, da_unit_table_name, \
+    time_between_read_from_each_device
 from core.config.Config import register_for_data, register_for_counter, register_for_start_read, register_for_end_read
 
 
@@ -323,6 +325,7 @@ class GateWay:
         self.RPS = 0
         self.TimeDis = False
         self.DiffTime = False
+        self.read_data = False
 
         if db_id:
             self.update()
@@ -470,6 +473,10 @@ class GateWay:
             self.SleepTime = plc_time_sleep_min
         if self.SleepTime >= plc_time_sleep_max:
             self.SleepTime = plc_time_sleep_max
+
+        if self.read_data:
+            self.SleepTime += time_between_read_from_each_device
+            self.read_data = False
         self.SleepTime = round(self.SleepTime, 2)
 
     def restart_thread(self):
@@ -557,54 +564,58 @@ class GateWay:
                 Logging.da_log("Reading Data Thread " + self.Name, "PLC " + self.Name + " Stop")
                 print("stop gateway " + self.Name)
                 break
-            sleep(self.SleepTime)
-            try:
-                # plc_is_open = self.client.is_open()
-                plc_is_open = self.client.open()
 
-                if not plc_is_open:
-                    self.ReadCounter = 0
-                    self.DataCounter = 0
-                    self.ret_num += 1
+            for i in self.electrical_devices:
+                this_unit_id = i.unit
+                sleep(self.SleepTime)
+                try:
+                    # plc_is_open = self.client.is_open()
+                    plc_is_open = self.client.open()
 
-                    print("PLC " + str(self.Name) + " disconnected! | retry number : " + str(self.ret_num))
-                    self.disconnect()
-
-                if plc_is_open:
-                    self.ReadCounter += 1
-                    if (datetime.now() - now_sleep).seconds >= plc_refresh_time:
-                        now_sleep = datetime.now()
-                        self.DPS = self.DataCounter
-                        self.RPS = self.ReadCounter
+                    if not plc_is_open:
                         self.ReadCounter = 0
                         self.DataCounter = 0
-                        # if not self.checkBox_Counter.isChecked():
-                        #     self.PLC_Counter_lbl.setText(str(self.RPS / PLCRefreshTime))
-                        self.cal_sleep_time()
+                        self.ret_num += 1
 
-                    for i in self.electrical_devices:
-                        this_unit_id = i.unit
-                        print("requesting data from unit {}".format(this_unit_id))
-                        data = self.electrical_substation_data_from_plc(this_unit_id)
+                        print("PLC " + str(self.Name) + " disconnected! | retry number : " + str(self.ret_num))
+                        self.disconnect()
 
-                        if data is not None:
-                            if data:
-                                self.DataCounter += 1
+                    if plc_is_open:
+                        self.ReadCounter += 1
+                        if (datetime.now() - now_sleep).seconds >= plc_refresh_time:
+                            now_sleep = datetime.now()
+                            self.DPS = self.DataCounter
+                            self.RPS = self.ReadCounter
+                            self.ReadCounter = 0
+                            self.DataCounter = 0
+                            # if not self.checkBox_Counter.isChecked():
+                            #     self.PLC_Counter_lbl.setText(str(self.RPS / PLCRefreshTime))
+                            self.cal_sleep_time()
 
-                                print("data from unit {}:".format(this_unit_id))
-                                choose = electrical_extract_choose(data)
+                        if (datetime.now() - i.last_read_time_from_device).seconds >= i.refresh_time:
+                            print("time = {} requesting data from unit {}".format(datetime.now(), this_unit_id))
+                            data = self.electrical_substation_data_from_plc(this_unit_id)
+                            i.last_read_time_from_device = datetime.now()
 
-                                # print(data)
-                                self.electrical_substation_queue.put([choose, data])
-                        else:
-                            print("data from unit {} is None!".format(this_unit_id))
+                            if data is not None:
+                                if data:
+                                    self.DataCounter += 1
+                                    self.read_data = True
+                                    self.cal_sleep_time()
+                                    print("data from unit {}:".format(this_unit_id))
+                                    choose = electrical_extract_choose(data)
 
-                    self.connect()
+                                    # print(data)
+                                    self.electrical_substation_queue.put([choose, data])
+                            else:
+                                print("data from unit {} is None!".format(this_unit_id))
 
-            except Exception as e:
-                print(e)
-                Logging.da_log("send and receive " + str(self.DBid), str(e))
-                break
+                        self.connect()
+
+                except Exception as e:
+                    print(e)
+                    Logging.da_log("send and receive " + str(self.DBid), str(e))
+                    break
 
     def electrical_substation_data_from_plc(self, rs_485_address):
         self.client.unit_id(rs_485_address)

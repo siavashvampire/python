@@ -62,6 +62,8 @@ plc_refresh_time = 5
 plc_sleep_time_step_down = 0.1
 plc_sleep_time_step_up = 0.01
 
+time_between_read_from_each_device = 0.2
+
 config_db.update({"register_for_start_read": str(register_for_start_read)})
 config_db.update({"register_for_end_read": str(register_for_end_read)})
 config_db.update({"register_for_data": str(register_for_data)})
@@ -73,6 +75,7 @@ config_db.update({"plc_time_sleep_min": str(plc_time_sleep_min)})
 config_db.update({"plc_refresh_time": str(plc_refresh_time)})
 config_db.update({"plc_sleep_time_step_down": str(plc_sleep_time_step_down)})
 config_db.update({"plc_sleep_time_step_up": str(plc_sleep_time_step_up)})
+config_db.update({"time_between_read_from_each_device": str(time_between_read_from_each_device)})
 # end  PLC Config
 
 # Start  Timeouts Config

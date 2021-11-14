@@ -45,6 +45,7 @@ plc_time_sleep_min = float(sAll["plc_time_sleep_min"])
 plc_refresh_time = float(sAll["plc_refresh_time"])
 plc_sleep_time_step_down = float(sAll["plc_sleep_time_step_down"])
 plc_sleep_time_step_up = float(sAll["plc_sleep_time_step_up"])
+time_between_read_from_each_device = float(sAll["time_between_read_from_each_device"])
 # end  PLC Config
 
 # Start  Timeouts Config

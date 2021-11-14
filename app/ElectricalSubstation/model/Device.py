@@ -20,6 +20,8 @@ class Device:
         self.refresh_time = refresh_time
         self.data_type = Device_new_log_data
         self.sender_queue = sender_queue
+        self.last_read_time_from_device = datetime.now()
+
 
         if self.substation and self.unit:
             self.update(self.substation, self.unit)
