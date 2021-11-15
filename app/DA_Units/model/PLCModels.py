@@ -1,4 +1,3 @@
-import json
 import threading
 import time
 import winsound
@@ -12,7 +11,7 @@ from pyModbusTCP.client import ModbusClient
 from tinydb import TinyDB
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
-from app.ElectricalSubstation.app_provider.admin.main import ElectricalSubstation, get_devices_by_substation_id
+from app.ElectricalSubstation.app_provider.admin.main import get_devices_by_substation_id
 from app.LineMonitoring.app_provider.api.LastLog import getABSecond, getText
 from app.LineMonitoring.app_provider.api.ReadText import PLCConnectBaleText, PLCDisconnectBaleText, VirtualText
 from core.config.Config import da_unit_db_path, modbus_timeout, plc_time_sleep_max, plc_time_sleep_min, \
@@ -299,13 +298,15 @@ class Delta12SE:
 
 
 class GateWay:
+    app: str
+
     def __init__(self, db_id=0, ip="192.168.1.237", port=502, name="", test_port=0, messenger_queue=None,
                  app_name="ElectricalSubstation_0",
                  line_monitoring_queue=None,
                  electrical_substation_queue=None):
         from core.theme.pic import Pics
 
-        self.DBid = db_id
+        self.DBid = db_id #: Doc comment *inline* with attribute
         self.deleteMark = Pics.deleteMark
         self.checkMark = Pics.checkMark
         self.Port = port
@@ -450,6 +451,11 @@ class GateWay:
             self.disc_msg_sent = False
 
     def test(self, data):
+        """
+        test DAUnits that is alive or not with make a port on and
+        Args:
+            data: the amount of time that sensor is on in second
+        """
         if self.MessengerQ is not None:
             self.MessengerQ.put([VirtualText.format(Name=self.Name, format=self.TestPort, data=data), -2, -4, 1])
             self.MessengerQ.put([VirtualText.format(Name=self.Name, format=self.TestPort, data=data), -2, -4, 2])
@@ -809,7 +815,7 @@ class GateWay:
                 return list_uint_16bit
 
         if _data_type == "4Q_FP_PF":
-            list_4Q_FP_PF = []
+            list_4_q_fp_pf = []
             if _input_or_holding == "input":
                 data = self.client.read_input_registers(_address, _length * 2)
             if _input_or_holding == "holding":
@@ -817,25 +823,25 @@ class GateWay:
             if data:
                 list_32_bits = utils.word_list_to_long(data, big_endian=_big_endian)
                 for val in list_32_bits:
-                    list_4Q_FP_PF.append(round(utils.decode_ieee(val), 2))
+                    list_4_q_fp_pf.append(round(utils.decode_ieee(val), 2))
 
-                return list_4Q_FP_PF
+                return list_4_q_fp_pf
 
         if _data_type == "INT64":
-            list_INT64 = []
+            list_int_64 = []
             if _input_or_holding == "input":
                 data = self.client.read_input_registers(_address, _length * 4)
             if _input_or_holding == "holding":
                 data = self.client.read_holding_registers(_address, _length * 4)
             if data:
                 while len(data) >= 4:
-                    this_INT64 = (data[0:4][3] << 16 * 3) + (data[0:4][2] << 16 * 2) + (data[0:4][1] << 16 * 1) + \
+                    this_int_64 = (data[0:4][3] << 16 * 3) + (data[0:4][2] << 16 * 2) + (data[0:4][1] << 16 * 1) + \
                                  data[0:4][
                                      0]
-                    list_INT64.append(this_INT64)
+                    list_int_64.append(this_int_64)
                     del data[0:4]
 
-                return list_INT64
+                return list_int_64
 
     def read_on_timer(self):
         self.client.unit_id(13)

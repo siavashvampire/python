@@ -58,7 +58,6 @@ class DAUnits:
         alive_plc = True
         for plc in self.units:
             if not (plc.ReadingDataThread.is_alive()):
-                print(plc.Name)
                 alive_plc = False
         if not alive_plc:
             if not self.stop_check:
