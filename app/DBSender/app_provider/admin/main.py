@@ -7,7 +7,7 @@ from time import sleep
 from tinydb import TinyDB, table
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
-from core.RH.ResponseHandler import send_data
+from core.RH.ResponseHandler import send_data_rh
 from core.app_provider.api.get import get_from_site_db, site_connection
 from core.config.Config import main_get_check_url, log_db_path, main_default_log_url, send_timeout, check_timeout, \
     queue_sender_max_wait, sleep_time_1, sleep_time_2, sleep_time_3, sender_table_name, count_for_send_list, \
@@ -119,24 +119,21 @@ class DataArchive:
     def send_data(self, data):
         if type(data) == list:
             # TODO:aval check konim k age 1 dade bashe type mitone motefavet bashad ya na baad motmaen shim 1 dade ham dorost mifreste
-            payload = data
 
             url = main_default_log_url
             good = False
             index = 0
             if self.check_db():
-                payload = json.dumps(payload)
+                payload = json.dumps(data)
                 payload = "--" + boundary_for_payload + "\r\nContent-Disposition: form-data; name=\"DataArray\"\r\n\r\n" \
                           + payload + "\r\n--" + boundary_for_payload + "--"
                 headers = {'cache-control': "no-cache",
                            'content-type': "multipart/form-data; boundary=" + boundary_for_payload}
                 status, r = site_connection(url, send_timeout, data=payload, header=headers)
-                print(r)
-                good, index, error = send_data(r, status)
+                good, index, error = send_data_rh(r, status)
                 # self.insertFlag = RH(r, status)
 
-            temps = data[0:index]
-            s_doc_id = [int(i.doc_id) for i in temps]
+            s_doc_id = [data[i].doc_id for i in index]
             return good, s_doc_id
         if type(data) == table.Document:
             payload = data
@@ -148,7 +145,7 @@ class DataArchive:
             r = ""
             if self.check_db():
                 status, r = site_connection(url, send_timeout, data=payload)
-                good, index, error = send_data(r, status)
+                good, index, error = send_data_rh(r, status)
             if not (status_code in [200, 204, 205]):
                 Logging.sender_log("Sender", "status code : " + str(status_code) + " , " + str(r))
             return good, [data.doc_id]

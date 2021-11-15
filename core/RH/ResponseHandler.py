@@ -90,22 +90,24 @@ def GetActivityeHandler(r, status):
     return massage
 
 
-def send_data(r, status):
-    error = False
+def send_data_rh(r, status):
+    error = []
     good = False
-    index = 0
-    if status in [200, 204, 205]:
+    index = []
+    if status is True:
         good = True
-        index = count_for_send_list
-        r = ""
-    elif status == 400:
+        result = r["result"]
+        temp_index = 0
+        for i in result:
+            if i["result"]:
+                index.append(temp_index)
+            else:
+                error.append(temp_index)
+
+            temp_index += 1
+
+    else:
         r = r["message"]
         index = r["indexOfProblem"]
         error = r["result"]
-        if index == 0:
-            good = False
-        else:
-            good = True
-    else:
-        r = "status code : " + str(status) + " , " + str(r)
     return good, index, error

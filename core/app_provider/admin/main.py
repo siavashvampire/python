@@ -184,9 +184,9 @@ class Main:
         self.bale_org.state_thread(state=False, program=True)
         self.close_splash.add_saved_text("Bale system closed!")
 
-        self.close_splash.show_message("disconnecting database")
-        self.sender_thread.state_thread(state=False, program=True)
-        self.close_splash.add_saved_text("database connection ended!")
+        self.close_splash.show_message("closing DA units system")
+        self.da_units.state_thread(state=False, program=True)
+        self.close_splash.add_saved_text("DA units system closed!")
 
         self.close_splash.show_message("closing backup system")
         self.backup_thread.state_thread(state=False, program=True)
@@ -196,9 +196,10 @@ class Main:
         self.line_monitoring.state_thread(state=False, program=True)
         self.close_splash.add_saved_text("line monitoring system closed!")
 
-        self.close_splash.show_message("closing DA units system")
-        self.da_units.state_thread(state=False, program=True)
-        self.close_splash.add_saved_text("DA units system closed!")
+        self.close_splash.show_message("disconnecting database")
+        self.sender_thread.state_thread(state=False, program=True)
+        self.close_splash.add_saved_text("database connection ended!")
+
         # TODO:bayad check konim k hatman doroste ya na
 
     def logout(self):

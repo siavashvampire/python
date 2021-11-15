@@ -22,7 +22,6 @@ class Device:
         self.sender_queue = sender_queue
         self.last_read_time_from_device = datetime.now()
 
-
         if self.substation and self.unit:
             self.update(self.substation, self.unit)
 
@@ -35,9 +34,9 @@ class Device:
                  "data": self.get_data(values, datetime.now().strftime(time_format))})
 
     def update(self, substation=0, unit=0):
-        Prop = Query()
-        DB = TinyDB(device_db_path).table(device_table_name)
-        sea = DB.search((Prop.substation_id == substation) & (Prop.unitId == unit))
+        prop = Query()
+        db = TinyDB(device_db_path).table(device_table_name)
+        sea = db.search((prop.substation_id == substation) & (prop.unitId == unit))
         if sea:
             sea = sea[0]
             self.substation_name = sea["substation_name"]
@@ -426,12 +425,13 @@ class Device:
             else:
                 return 0
 
+
 def find_device(choose: list[int], devices: list[Device]) -> Device:
-    substation_id = choose[0]
-    unitId = choose[1]
+    substation = choose[0]
+    unit = choose[1]
     for this_device in devices:
-        if this_device.substation == substation_id:
-            if this_device.unit == unitId:
+        if this_device.substation == substation:
+            if this_device.unit == unit:
                 # print(this_device.substation_name)
                 return this_device
     return Device()
