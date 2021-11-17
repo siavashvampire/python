@@ -48,9 +48,13 @@ def get_from_site_db(get_url, get_timeout, db_path='', table_name=''):
     return status, r
 
 
-def site_connection(url, timeout, data=None, header=None):
+def site_connection(url, timeout, data=None, header=None, params=None):
     try:
-        response = requests.post(url, data=data, headers=header, timeout=timeout)
+        if params is None:
+            response = requests.post(url, data=data, headers=header, timeout=timeout)
+        else:
+
+            response = requests.post(url, data=data, headers=header, timeout=timeout, params=params)
     except requests.exceptions.HTTPError as errh:
         r = "Http Error:"
     except requests.exceptions.ConnectionError as errc:
@@ -62,10 +66,16 @@ def site_connection(url, timeout, data=None, header=None):
 
     else:
         status_code = response.status_code
+
         if status_code == 200:
             r = response.json()
-            if r["status"] is True:
-                return r["status"], r
+            if "status" in r:
+                if r["status"] is True:
+                    return r["status"], r
+                else:
+                    return False, r
+            else:
+                return True, r
         elif status_code == 204:
             return True, False
         elif status_code == 205:

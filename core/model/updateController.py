@@ -58,6 +58,7 @@ class UpdateController:
         if app_order[1] in keys and r[app_order[1]] is not None:
             print("ElectricalSubstation")
             self.electrical_update_func()
+            self.da_units_update_func()
 
         if app_order[2] in keys and r[app_order[2]] is not None:
             print("contacts")

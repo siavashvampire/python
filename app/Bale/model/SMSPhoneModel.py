@@ -1,5 +1,4 @@
-
-
+from core.app_provider.api.get import site_connection
 from core.config.Config import sms_username, sms_password, sms_phone, phone_timeout, sms_phone_send_url
 
 
@@ -7,15 +6,22 @@ class SMSPhoneData:
     def __init__(self, name, phone, units, phase, access=0):
         self.Name = str(name)
         self.Phone = int(phone)
-        self.Units = units
-        self.phase = phase
+        units = units.split(",")
+        self.Units = []
+        for i in units:
+            self.Units.append(int(i))
+
+        phase = phase.split(",")
+        self.phase = []
+        for i in phase:
+            self.phase.append(int(i))
         self.Access = int(access)
 
-    def check_id(self, id):
-        if id > 0:
+    def check_id(self, id_in):
+        if id_in > 0:
             if -4 in self.Units:
                 return True
-        if id in self.Units:
+        if id_in in self.Units:
             return True
         return False
 
@@ -28,13 +34,14 @@ class SMSPhoneData:
             return True
         return False
 
-    def Check(self, id, phase):
-        if self.check_id(id) and self.check_phase(phase):
+    def check(self, id_temp, phase):
+        if self.check_id(id_temp) and self.check_phase(phase):
             return True
         return False
 
-    def Send(self, text):
+    def send(self, text):
         querystring = {"from": sms_phone, "to": "0" + str(self.Phone), "msg": text, "uname": sms_username,
                        "pass": sms_password}
-        response = requests.post(sms_phone_send_url, params=querystring, timeout=phone_timeout)
-        return response.text
+
+        r = site_connection(sms_phone_send_url, phone_timeout, params=querystring)[1]
+        return r

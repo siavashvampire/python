@@ -32,7 +32,6 @@ class DAUnits:
                                             electrical_substation_queue=self.electrical_substation_queue))
 
             for j in self.plc_db.search(Query().type == "MERSAD_GATEWAY"):
-                # print(j)
                 self.units.append(GateWay(db_id=j.doc_id,
                                           app_name=j['app'],
                                           messenger_queue=self.messenger_q,

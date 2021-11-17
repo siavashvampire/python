@@ -23,6 +23,7 @@ class BackupMain:
         self.stop_thread = False
         self.Thread = Thread(target=self.backup_thread, args=(lambda: self.stop_thread,))
         self.ui = ui
+        self.Backup = []
         self.create_backup()
         self.last_check = datetime.now()
 

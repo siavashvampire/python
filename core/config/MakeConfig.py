@@ -52,7 +52,7 @@ register_for_counter = 6099
 register_for_test = 2098
 
 if developer:
-    disconnect_alarm_time = 5 * 60
+    disconnect_alarm_time = 5
 else:
     disconnect_alarm_time = 5 * 60
 

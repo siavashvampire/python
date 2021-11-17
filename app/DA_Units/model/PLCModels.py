@@ -334,8 +334,6 @@ class GateWay:
         if self.app_name == "Mersad Monitoring System":
             self.thread_func = self.line_monitoring_read_data_from_plc_thread
         elif "ElectricalSubstation" in self.app_name:
-            # print("app_name")
-            # print(self.app_name)
             s = self.app_name.split("_")
             self.app_name = s[0]
             self.electrical_substation_id = int(s[1])
@@ -376,7 +374,6 @@ class GateWay:
 
     def run_thread(self):
         self.ReadingDataThread.start()
-        # print(self.Name)
         Logging.da_log("Init PLC " + self.Name, "PLC " + self.Name + " start")
 
     def update(self):
@@ -599,7 +596,6 @@ class GateWay:
                             self.cal_sleep_time()
 
                         if (datetime.now() - i.last_read_time_from_device).seconds >= i.refresh_time:
-                            print("time = {} requesting data from unit {}".format(datetime.now(), this_unit_id))
                             data = self.electrical_substation_data_from_plc(this_unit_id)
                             i.last_read_time_from_device = datetime.now()
 
@@ -608,13 +604,12 @@ class GateWay:
                                     self.DataCounter += 1
                                     self.read_data = True
                                     self.cal_sleep_time()
-                                    print("data from unit {}:".format(this_unit_id))
                                     choose = electrical_extract_choose(data)
-
-                                    # print(data)
                                     self.electrical_substation_queue.put([choose, data])
                             else:
-                                print("data from unit {} is None!".format(this_unit_id))
+                                pass
+                                # TODO: vaghti k none has gozaresh bede to log
+                                # print("data from unit {} is None!".format(this_unit_id))
 
                         self.connect()
 
@@ -757,7 +752,6 @@ class GateWay:
 
                 # json_data_out = json.dumps(dict_data_out, indent=2)
 
-                print(dict_data_out)
                 return dict_data_out
 
             except:

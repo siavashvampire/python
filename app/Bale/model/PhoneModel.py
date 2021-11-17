@@ -8,8 +8,16 @@ class PhoneData:
         self.Name = str(name)
         self.id = int(id_in)
         self.SendONOFF = int(send_on_off)
-        self.Units = units
-        self.phase = phase
+        units = units.split(",")
+        self.Units = []
+        for i in units:
+            self.Units.append(int(i))
+
+        phase = phase.split(",")
+        self.phase = []
+        for i in phase:
+            self.phase.append(int(i))
+
         self.Access = int(access)
 
     def on_off_active(self, send_on_off):

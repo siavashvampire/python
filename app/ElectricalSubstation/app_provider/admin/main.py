@@ -169,9 +169,6 @@ class ElectricalSubstation:
 
     def update_system(self, where_should_update=None):
         self.read_all_device_data()
-        # if "TileKindUpdate" in where_should_update:
-        #     self.read_all_device_data()
-        #     print("omad sensor")
         self.create_devices()
 
 
