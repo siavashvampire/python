@@ -91,7 +91,7 @@ on_cam_switch_value = int(sAll["on_cam_switch_value"])
 system_version = "Monitoring Version: 0.0"
 db_username = sAll["db_username"]
 db_password = sAll["db_password"]
-db_name = sAll["database_name"]
+db_name = sAll["db_name"]
 costumer = sAll["costumer"]
 remove_db_flag = int(sAll["remove_db_flag"])
 # end  DB Config

@@ -2,7 +2,7 @@ from queue import Queue
 from time import sleep
 from datetime import datetime
 from threading import Thread
-from typing import List, Any, Callable
+from typing import List, Callable
 
 from tinydb import TinyDB, Query
 from tinydb.table import Table
@@ -23,7 +23,7 @@ class BackupMain:
     Backup: List[BackupModel]
     last_check: datetime
 
-    def __init__(self, ui=None):
+    def __init__(self, ui=None) -> None:
         self.state = False
         self.stop_check = False
         self.should_stop = False
@@ -47,9 +47,9 @@ class BackupMain:
                 self.BackupQ.task_done()
                 bup = self.find_backup(id_temp)
                 bup.make_backup()
-                backup_prop = Query()
+                prop = Query()
                 self.BackupDB.update({'LastBackup': bup.last_backup_time.strftime(time_format)},
-                                     backup_prop.Path == str(bup.path))
+                                     prop.Path == str(bup.path))
             except:
                 sleep(10)
                 if stop_thread():
@@ -115,28 +115,29 @@ class BackupMain:
             if hours >= int(r.time):
                 self.BackupQ.put(r.db_id)
 
-    def find_backup(self, id_temp):
+    def find_backup(self, id_temp: int) -> BackupModel:
         for r in self.Backup:
             if r.db_id == id_temp:
                 return r
+        return BackupModel()
 
-    def restart_thread(self):
+    def restart_thread(self) -> None:
         if not (self.Thread.is_alive()):
             self.stop_thread = False
             self.Thread = Thread(target=self.backup_thread, args=(lambda: self.stop_thread,))
             self.Thread.start()
 
-    def update_app(self):
+    def update_app(self) -> None:
         self.get_backup_from_ui()
         self.clear_backup_ui()
         self.create_backup()
 
-    def check(self):
+    def check(self) -> None:
         if not (self.Thread.is_alive()):
             self.restart_thread()
             self.stop_thread = False
 
-    def state_thread(self, state=False, program=False):
+    def state_thread(self, state: bool = False, program: bool = False) -> None:
         if program is False:
             if self.state:
                 self.should_stop = True
@@ -151,13 +152,13 @@ class BackupMain:
             if state is False:
                 self.stop_func()
 
-    def stop_func(self):
+    def stop_func(self) -> None:
         self.stop_thread = True
         self.Thread.join()
         self.stop_check = True
         self.state = False
 
-    def start_func(self):
+    def start_func(self) -> None:
         self.stop_thread = False
         self.restart_thread()
         self.stop_check = False
