@@ -29,7 +29,7 @@ class BackupModel:
 
     def __init__(self, db_id: int = 0, path: str = "C:\Mersad Monitoring/backup/", file_name: str = "SQLBackup",
                  name: str = "", time: int = 12, username: str = db_username, password: str = db_password,
-                 database: str = db_name, ui=None, last_backup_time: datetime = None, queue: Queue = None):
+                 database: str = db_name, ui=None, last_backup_time: datetime = None, queue: Queue = None) -> None:
         self.path = path
         self.file_name = file_name
         self.name = name
@@ -70,7 +70,7 @@ class BackupModel:
                 self.Backup_FileName = QLineEdit()
                 self.Backup_Time = QLineEdit()
 
-    def make_backup(self):
+    def make_backup(self) -> None:
         os.makedirs(self.path, exist_ok=True)
 
         try:
@@ -121,13 +121,13 @@ class BackupModel:
         except Exception as e:
             Logging.main_log("MakeBackUP", str(e))
 
-    def set_ui(self):
+    def set_ui(self) -> None:
         file_name = QFileDialog.getExistingDirectory(None, 'Select a folder:', 'C:\\', QFileDialog.ShowDirsOnly)
         if file_name:
             self.Backup_Path.setText(str(file_name))
 
-    def update_last_backup_time(self):
+    def update_last_backup_time(self) -> None:
         self.last_backup_time = datetime.now()
 
-    def send_to_main_queue(self):
+    def send_to_main_queue(self) -> None:
         self.queue.put(self.db_id)
