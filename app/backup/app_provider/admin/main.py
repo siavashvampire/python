@@ -2,23 +2,32 @@ from queue import Queue
 from time import sleep
 from datetime import datetime
 from threading import Thread
-from typing import List
+from typing import List, Any, Callable
 
 from tinydb import TinyDB, Query
+from tinydb.table import Table
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
 from app.backup.model.dbbackupModel import BackupModel
-from core.config.Config import backup_db_path, backup_time, time_format
+from core.config.Config import backup_db_path, backup_time, time_format, backup_table_name
 
 
 class BackupMain:
+    state: bool
+    stop_check: bool
+    should_stop: bool
+    BackupDB: Table
+    BackupQ: Queue[int]
+    stop_thread: bool
+    Thread: Thread
     Backup: List[BackupModel]
+    last_check: datetime
 
     def __init__(self, ui=None):
         self.state = False
         self.stop_check = False
         self.should_stop = False
-        self.BackupDB = TinyDB(backup_db_path).table('Backup')
+        self.BackupDB = TinyDB(backup_db_path).table(backup_table_name)
         self.BackupQ = Queue()
         self.stop_thread = False
         self.Thread = Thread(target=self.backup_thread, args=(lambda: self.stop_thread,))
@@ -27,20 +36,20 @@ class BackupMain:
         self.create_backup()
         self.last_check = datetime.now()
 
-    def run_thread(self):
+    def run_thread(self) -> None:
         self.Thread.start()
 
-    def backup_thread(self, stop_thread):
+    def backup_thread(self, stop_thread: Callable[[], bool]) -> None:
         sleep(1)
         while True:
             try:
                 id_temp = self.BackupQ.get(block=False)
                 self.BackupQ.task_done()
                 bup = self.find_backup(id_temp)
-                bup.MakeBackUp()
+                bup.make_backup()
                 backup_prop = Query()
-                self.BackupDB.update({'LastBackup': bup.LastBackup.strftime(time_format)},
-                                     backup_prop.Path == str(bup.Path))
+                self.BackupDB.update({'LastBackup': bup.last_backup_time.strftime(time_format)},
+                                     backup_prop.Path == str(bup.path))
             except:
                 sleep(10)
                 if stop_thread():
@@ -52,39 +61,39 @@ class BackupMain:
                 self.check_backup_time()
                 self.last_check = datetime.now()
 
-    def create_backup(self):
+    def create_backup(self) -> None:
         if len(self.BackupDB):
             r = self.BackupDB.all()
-            self.Backup = [BackupModel(DBid=i.doc_id, queue=self.BackupQ,
-                                       LastBackup=datetime.strptime(i["LastBackup"], time_format),
-                                       Time=i["Time"], Path=i["Path"], FileName=i["FileName"], Name=i["Name"],
-                                       UI=self.ui) for i in r]
+            self.Backup = [BackupModel(db_id=i.doc_id, queue=self.BackupQ,
+                                       last_backup_time=datetime.strptime(i["LastBackup"], time_format),
+                                       time=i["Time"], path=i["Path"], file_name=i["FileName"], name=i["Name"],
+                                       ui=self.ui) for i in r]
             print("Backup Created!")
 
-    def get_backup_from_ui(self):
-        BackupProp = Query()
-        self.BackupDB = TinyDB(backup_db_path)
-        self.BackupDB.drop_tables()
-        self.BackupDB.close()
-        self.BackupDB = TinyDB(backup_db_path).table('Backup')
+    def get_backup_from_ui(self) -> None:
+        prop = Query()
+        db: TinyDB = TinyDB(backup_db_path)
+        db.drop_tables()
+        db.close()
+        self.BackupDB = TinyDB(backup_db_path).table(backup_table_name)
         for i in range(4):
             if str(self.ui.Backup_Name[i].text()) is not "":
-                Time = str(self.ui.Backup_Time[i].text())
-                Name = str(self.ui.Backup_Name[i].text())
-                Path = str(self.ui.Backup_Path[i].text())
-                FileName = str(self.ui.Backup_FileName[i].text())
+                time = str(self.ui.Backup_Time[i].text())
+                name = str(self.ui.Backup_Name[i].text())
+                path = str(self.ui.Backup_Path[i].text())
+                file_name = str(self.ui.Backup_FileName[i].text())
 
-                if Time is "":
-                    Time = str(12)
-                if Path is "":
-                    Path = r"C:\Mersad Monitoring/backup/"
-                if FileName is "":
-                    FileName = "SQLBackup"
-                self.BackupDB.upsert({'Name': str(Name), 'Time': str(Time), 'FileName': str(FileName),
+                if time is "":
+                    time = str(12)
+                if path is "":
+                    path = r"C:\Mersad Monitoring/backup/"
+                if file_name is "":
+                    file_name = "SQLBackup"
+                self.BackupDB.upsert({'Name': str(name), 'Time': str(time), 'FileName': str(file_name),
                                       'LastBackup': str(datetime.now().strftime(time_format)),
-                                      'Path': str(Path)}, BackupProp.Path == str(Path))
+                                      'Path': str(path)}, prop.Path == str(path))
 
-    def clear_backup_ui(self):
+    def clear_backup_ui(self) -> None:
         from core.theme.color.color import PB_BG_color_deactivate, PB_Text_color_deactivate
 
         for i in range(4):
@@ -99,16 +108,16 @@ class BackupMain:
             self.ui.Choose_Path_pb[i].setStyleSheet(
                 "background-color: rgba(" + PB_BG_color_deactivate + ");color: rgba(" + PB_Text_color_deactivate + ");")
 
-    def check_backup_time(self):
+    def check_backup_time(self) -> None:
         for r in self.Backup:
-            diff = datetime.now() - r.LastBackup
+            diff = datetime.now() - r.last_backup_time
             hours = diff.seconds // 3600 + diff.days * 24
-            if hours >= int(r.Time):
-                self.BackupQ.put(r.DBid)
+            if hours >= int(r.time):
+                self.BackupQ.put(r.db_id)
 
     def find_backup(self, id_temp):
         for r in self.Backup:
-            if r.DBid == id_temp:
+            if r.db_id == id_temp:
                 return r
 
     def restart_thread(self):

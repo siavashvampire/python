@@ -1,67 +1,88 @@
 import subprocess
 import zipfile
 import os
-from PyQt5.QtWidgets import QFileDialog
+from queue import Queue
+
+from PyQt5.QtWidgets import QFileDialog, QLineEdit, QPushButton
 from datetime import datetime
-from core.config.Config import system_version, db_username, db_password, database, costumer, remove_db_flag, time_format
+from core.config.Config import system_version, db_username, db_password, db_name, costumer, remove_db_flag, time_format
 import app.Logging.app_provider.admin.MersadLogging as Logging
 
 
 class BackupModel:
-    def __init__(self, DBid=0, Path="C:\Mersad Monitoring/backup/", FileName="SQLBackup", Name="", Time=12,
-                 username=db_username, password=db_password, database=database, UI=None, LastBackup=None, queue=None):
-        self.Path = Path
-        self.FileName = FileName
-        self.Name = Name
-        self.Time = Time
+    path: str
+    file_name: str
+    name: str
+    time: int
+    username: str
+    password: str
+    database: str
+    db_id: int
+    queue: Queue
+    last_backup_time: datetime
+    Backup_Name: QLineEdit
+    Backup_Path: QLineEdit
+    Backup_FileName: QLineEdit
+    Backup_Time: QLineEdit
+    Choose_Path_pb: QPushButton
+    Backup_pb: QPushButton
+
+    def __init__(self, db_id: int = 0, path: str = "C:\Mersad Monitoring/backup/", file_name: str = "SQLBackup",
+                 name: str = "", time: int = 12, username: str = db_username, password: str = db_password,
+                 database: str = db_name, ui=None, last_backup_time: datetime = None, queue: Queue = None):
+        self.path = path
+        self.file_name = file_name
+        self.name = name
+        self.time = time
         self.username = username
         self.password = password
         self.database = database
-        self.DBid = DBid
+        self.db_id = db_id
         self.queue = queue
-        if LastBackup is None:
-            LastBackup = datetime.now()
-        self.LastBackup = LastBackup
-        if DBid:
-            if self.DBid < 5 and UI is not None:
-                self.Backup_Name = UI.Backup_Name[self.DBid - 1]
-                self.Backup_Path = UI.Backup_Path[self.DBid - 1]
-                self.Backup_FileName = UI.Backup_FileName[self.DBid - 1]
-                self.Backup_Time = UI.Backup_Time[self.DBid - 1]
-                self.Choose_Path = UI.Choose_Path_pb[self.DBid - 1]
-                self.Backup_pb = UI.Backup_pb[self.DBid - 1]
 
-                self.Backup_Name.setText(str(self.Name))
-                self.Backup_Time.setText(str(self.Time))
-                self.Backup_FileName.setText(str(self.FileName))
-                self.Backup_Path.setText(str(self.Path))
+        if last_backup_time is None:
+            last_backup_time = datetime.now()
+        self.last_backup_time = last_backup_time
+        if self.db_id:
+            if self.db_id < 5 and ui is not None:
+                self.Backup_Name = ui.Backup_Name[self.db_id - 1]
+                self.Backup_Path = ui.Backup_Path[self.db_id - 1]
+                self.Backup_FileName = ui.Backup_FileName[self.db_id - 1]
+                self.Backup_Time = ui.Backup_Time[self.db_id - 1]
+                self.Choose_Path = ui.Choose_Path_pb[self.db_id - 1]
+                self.Backup_pb = ui.Backup_pb[self.db_id - 1]
+
+                self.Backup_Name.setText(str(self.name))
+                self.Backup_Time.setText(str(self.time))
+                self.Backup_FileName.setText(str(self.file_name))
+                self.Backup_Path.setText(str(self.path))
                 self.Choose_Path.setEnabled(True)
-                self.Choose_Path.clicked.connect(self.SetUI)
+                self.Choose_Path.clicked.connect(self.set_ui)
 
                 self.Backup_pb.setEnabled(True)
-                self.Backup_pb.clicked.connect(self.Send2queue)
+                self.Backup_pb.clicked.connect(self.send_to_main_queue)
                 from core.theme.color.color import PB_BG_color_deactivate
                 self.Backup_pb.setStyleSheet("background-color: rgba(" + PB_BG_color_deactivate + ");color: black;")
                 self.Choose_Path.setStyleSheet("background-color: rgba(" + PB_BG_color_deactivate + ");color: black;")
             else:
-                self.Backup_Name = ""
-                self.Backup_Path = ""
-                self.Backup_FileName = ""
-                self.Backup_Time = ""
+                self.Backup_Name = QLineEdit()
+                self.Backup_Path = QLineEdit()
+                self.Backup_FileName = QLineEdit()
+                self.Backup_Time = QLineEdit()
 
-    def MakeBackUp(self):
-        os.makedirs(self.Path, exist_ok=True)
+    def make_backup(self):
+        os.makedirs(self.path, exist_ok=True)
 
         try:
-            FileNameExtension = ".sql"
-            self.updateTime()
-            FilePathTemp = self.Path + "/" + self.FileName + '_' + self.LastBackup.strftime('%y-%m-%d')
+            file_name_extension = ".sql"
+            self.update_last_backup_time()
+            file_path_temp = self.path + "/" + self.file_name + '_' + self.last_backup_time.strftime('%y-%m-%d')
             if remove_db_flag:
-                for root, dirs, files in os.walk(self.Path + "/"):
+                for root, dirs, files in os.walk(self.path + "/"):
                     for file in files:
-                        if file.endswith(FileNameExtension) or file.endswith('.zip'):
+                        if file.endswith(file_name_extension) or file.endswith('.zip'):
                             os.remove(os.path.join(root, file))
-            with open(FilePathTemp + FileNameExtension, 'w') as output:
+            with open(file_path_temp + file_name_extension, 'w') as output:
                 output.write('-- In the Name of God')
                 output.write('\n')
                 output.write('-- Database Backup')
@@ -69,10 +90,10 @@ class BackupModel:
                 output.write('-- Created by Siavash Sepahi !')
                 output.write('\n')
                 output.write('-- Backup Name : ')
-                output.write(str(self.Name))
+                output.write(str(self.name))
                 output.write('\n')
                 output.write('-- Generation Time : ')
-                output.write(self.LastBackup.strftime(time_format))
+                output.write(self.last_backup_time.strftime(time_format))
                 output.write('\n')
                 output.write('-- ')
                 output.write(system_version)
@@ -88,28 +109,25 @@ class BackupModel:
                 output.write('\n')
                 c = subprocess.run(['mysqldump', '-u', self.username, '-p%s' % self.password, self.database],
                                    stdout=output, shell=True)
-            with zipfile.ZipFile(FilePathTemp + '.zip', 'w', zipfile.ZIP_DEFLATED) as myzip:
+            with zipfile.ZipFile(file_path_temp + '.zip', 'w', zipfile.ZIP_DEFLATED) as myzip:
                 # for file in os.listdir(self.Path + "/"):
                 #     if file.endswith(FileNameExtension):
                 #         myzip.write(os.path.join(root, file),
                 #                    os.path.relpath(os.path.join(root, file),
                 #                                    os.path.join(self.Path + "/", '..')))
-                myzip.write(FilePathTemp + FileNameExtension,
-                            os.path.relpath(FilePathTemp + FileNameExtension, os.path.join(self.Path + "/", '..')))
-            os.remove(FilePathTemp + FileNameExtension)
+                myzip.write(file_path_temp + file_name_extension,
+                            os.path.relpath(file_path_temp + file_name_extension, os.path.join(self.path + "/", '..')))
+            os.remove(file_path_temp + file_name_extension)
         except Exception as e:
             Logging.main_log("MakeBackUP", str(e))
 
-    def SetUI(self):
+    def set_ui(self):
         file_name = QFileDialog.getExistingDirectory(None, 'Select a folder:', 'C:\\', QFileDialog.ShowDirsOnly)
         if file_name:
             self.Backup_Path.setText(str(file_name))
 
-    def updateTime(self):
-        self.LastBackup = datetime.now()
+    def update_last_backup_time(self):
+        self.last_backup_time = datetime.now()
 
-    def Send2queue(self):
-        self.queue.put(self.DBid)
-
-
-
+    def send_to_main_queue(self):
+        self.queue.put(self.db_id)

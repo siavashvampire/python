@@ -16,6 +16,15 @@ from app.insertUser.app_provider.admin.user import insert_user as InsWorker
 
 
 class MainUi(QFrame):
+    # init backup
+    Backup_Name: list[QLineEdit]
+    Backup_Path: list[QLineEdit]
+    Backup_FileName: list[QLineEdit]
+    Backup_Time: list[QLineEdit]
+    Choose_Path_pb: list[QPushButton]
+    Backup_pb: list[QPushButton]
+
+
     def __init__(self):
         super(MainUi, self).__init__()
         uic.loadUi(path + "core/theme/ui/on_off.ui", self)

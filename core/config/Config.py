@@ -91,7 +91,7 @@ on_cam_switch_value = int(sAll["on_cam_switch_value"])
 system_version = "Monitoring Version: 0.0"
 db_username = sAll["db_username"]
 db_password = sAll["db_password"]
-database = sAll["database"]
+db_name = sAll["database_name"]
 costumer = sAll["costumer"]
 remove_db_flag = int(sAll["remove_db_flag"])
 # end  DB Config
@@ -111,6 +111,7 @@ phone_table_name = sAll["phone_table_name"]
 sms_phone_db_name = sAll["sms_phone_db_name"]
 sms_phone_table_name = sAll["sms_phone_table_name"]
 backup_db_name = sAll["backup_db_name"]
+backup_table_name = sAll["backup_table_name"]
 last_log_db_name = sAll["last_log_db_name"]
 da_unit_db_name = sAll["da_unit_db_name"]
 da_unit_table_name = sAll["da_unit_table_name"]

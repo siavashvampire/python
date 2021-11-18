@@ -163,13 +163,13 @@ else:
     db_username = 'root'
     db_password = 'AAaa1234'
 
-database = 'test'
+db_name = 'test'
 costumer = 'Hafez Tiles'
 remove_db_flag = 1
 
 config_db.update({"db_username": str(db_username)})
 config_db.update({"db_password": str(db_password)})
-config_db.update({"database": str(database)})
+config_db.update({"db_name": str(db_name)})
 config_db.update({"costumer": str(costumer)})
 config_db.update({"remove_db_flag": str(remove_db_flag)})
 # end  DB Config
@@ -194,6 +194,7 @@ phone_table_name = 'phone'
 sms_phone_db_name = 'phone_property_db.json'
 sms_phone_table_name = 'sms_phone'
 backup_db_name = 'backup_property_db.json'
+backup_table_name ='Backup'
 last_log_db_name = 'last_log_db.json'
 da_unit_db_name = 'da_units_property_db.json'
 da_unit_table_name = 'db_units'
@@ -213,6 +214,7 @@ config_db.update({"phone_table_name": str(phone_table_name)})
 config_db.update({"sms_phone_db_name": str(sms_phone_db_name)})
 config_db.update({"sms_phone_table_name": str(sms_phone_table_name)})
 config_db.update({"backup_db_name": str(backup_db_name)})
+config_db.update({"backup_table_name": str(backup_table_name)})
 config_db.update({"last_log_db_name": str(last_log_db_name)})
 config_db.update({"da_unit_db_name": str(da_unit_db_name)})
 config_db.update({"da_unit_table_name": str(da_unit_table_name)})

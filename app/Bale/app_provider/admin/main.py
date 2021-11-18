@@ -95,6 +95,8 @@ class BaleMain:
     TextQ: Queue[list[str, int, int, int]]
     phones_bale: List[PhoneData]
     phones_SMS: List[SMSPhones]
+    OpenThread: Thread
+    SendThread: Thread
 
     def __init__(self, sender_queue: Queue, bale_status_label: QLabel = None, thread_label: QLabel = None) -> None:
         # Todo:on bala k jelo QLable None has bayad doros beshe None mani nemide

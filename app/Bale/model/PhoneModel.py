@@ -26,6 +26,7 @@ class PhoneData:
         db = TinyDB(phone_db_path).table(phone_table_name)
         prop = Query()
         db.update({'SendONOFF': int(send_on_off)}, prop.id == self.id)
+        # Todo: bayad baraye site ham befrese khob
 
     def check_id(self, id_temp: int) -> bool:
         if id_temp > 0:
