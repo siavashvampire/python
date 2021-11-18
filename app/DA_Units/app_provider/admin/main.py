@@ -1,3 +1,5 @@
+from queue import Queue
+
 from tinydb import TinyDB, Query
 
 from app.DA_Units.model.PLCModels import Delta12SE, GateWay
@@ -8,11 +10,12 @@ from core.theme.pic import Pics
 
 
 class DAUnits:
-    def __init__(self, messenger_q, line_monitoring_queue, electrical_substation_queue, thread_label):
+    def __init__(self, messenger_queue: Queue[list[str, int, int, int]], line_monitoring_queue: Queue,
+                 electrical_substation_queue, thread_label) -> None:
         self.thread_label = thread_label
         self.should_stop = False
         self.plc_db = TinyDB(da_unit_db_path).table(da_unit_table_name)
-        self.messenger_q = messenger_q
+        self.messenger_queue = messenger_queue
         self.line_monitoring_queue = line_monitoring_queue
         self.electrical_substation_queue = electrical_substation_queue
         self.units = []
@@ -22,19 +25,19 @@ class DAUnits:
         # TODO:update system bayad baresh darim
         self.create_units()
 
-    def create_units(self):
+    def create_units(self) -> None:
         if len(self.plc_db):
             self.units = []
             for i in self.plc_db.search(Query().type == "PLC_delta_DVP_12SE"):
                 self.units.append(Delta12SE(db_id=i.doc_id,
-                                            messenger_queue=self.messenger_q,
+                                            messenger_queue=self.messenger_queue,
                                             line_monitoring_queue=self.line_monitoring_queue,
                                             electrical_substation_queue=self.electrical_substation_queue))
 
             for j in self.plc_db.search(Query().type == "MERSAD_GATEWAY"):
                 self.units.append(GateWay(db_id=j.doc_id,
                                           app_name=j['app'],
-                                          messenger_queue=self.messenger_q,
+                                          messenger_queue=self.messenger_queue,
                                           line_monitoring_queue=self.line_monitoring_queue,
                                           electrical_substation_queue=self.electrical_substation_queue))
 

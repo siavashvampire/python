@@ -43,15 +43,15 @@ class BackupMain:
         sleep(1)
         while True:
             try:
-                id_temp = self.BackupQ.get(block=False)
+                id_temp = self.BackupQ.get(timeout=10)
                 self.BackupQ.task_done()
                 bup = self.find_backup(id_temp)
-                bup.make_backup()
-                prop = Query()
-                self.BackupDB.update({'LastBackup': bup.last_backup_time.strftime(time_format)},
-                                     prop.Path == str(bup.path))
+                if bup.db_id:
+                    bup.make_backup()
+                    prop = Query()
+                    self.BackupDB.update({'LastBackup': bup.last_backup_time.strftime(time_format)},
+                                         prop.Path == str(bup.path))
             except:
-                sleep(10)
                 if stop_thread():
                     Logging.main_log("Main Backup Thread", "Stop")
                     print("stop Backup")
@@ -77,17 +77,17 @@ class BackupMain:
         db.close()
         self.BackupDB = TinyDB(backup_db_path).table(backup_table_name)
         for i in range(4):
-            if str(self.ui.Backup_Name[i].text()) is not "":
+            if str(self.ui.Backup_Name[i].text()):
                 time = str(self.ui.Backup_Time[i].text())
                 name = str(self.ui.Backup_Name[i].text())
                 path = str(self.ui.Backup_Path[i].text())
                 file_name = str(self.ui.Backup_FileName[i].text())
 
-                if time is "":
+                if not time:
                     time = str(12)
-                if path is "":
+                if not path:
                     path = r"C:\Mersad Monitoring/backup/"
-                if file_name is "":
+                if not file_name:
                     file_name = "SQLBackup"
                 self.BackupDB.upsert({'Name': str(name), 'Time': str(time), 'FileName': str(file_name),
                                       'LastBackup': str(datetime.now().strftime(time_format)),

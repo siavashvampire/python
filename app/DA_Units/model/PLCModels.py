@@ -2,8 +2,9 @@ import threading
 import time
 import winsound
 from datetime import datetime
+from queue import Queue
 from time import sleep
-from typing import Callable
+from typing import Callable, Union
 
 from dateutil.relativedelta import relativedelta
 from persiantools.jdatetime import JalaliDateTime
@@ -22,7 +23,7 @@ from core.config.Config import da_unit_db_path, modbus_timeout, plc_time_sleep_m
 from core.config.Config import register_for_data, register_for_counter, register_for_start_read, register_for_end_read
 
 
-def clear_plc_ui(ui):
+def clear_plc_ui(ui) -> None:
     for i in range(4):
         ui.lineEdit_Name[i].setText("")
         ui.lineEdit_IP[i].setText("")
@@ -39,13 +40,13 @@ def clear_plc_ui(ui):
         ui.checkBox_Test_Virtual[i].setChecked(False)
 
 
-def extract_choose(data):
+def extract_choose(data: int) -> tuple[int, int]:
     choose = data % 1000
     data = (data // 1000) * 1000
     return choose, data
 
 
-def electrical_extract_choose(data):
+def electrical_extract_choose(data: int) -> list[int]:
     return [data['substation_id'], data['unitId']]
 
 
@@ -228,7 +229,7 @@ class Delta12SE:
             self.ReadingDataThread.start()
             Logging.da_log("Restart PLC " + self.Name, "PLC " + self.Name + " restart")
 
-    def line_monitoring_read_data_from_plc_thread(self, stop_thread: Callable[[], bool])->None:
+    def line_monitoring_read_data_from_plc_thread(self, stop_thread: Callable[[], bool]) -> None:
         sleep(1)
         now_sleep = datetime.now()
         while True:
@@ -301,13 +302,13 @@ class Delta12SE:
 class GateWay:
     app: str
 
-    def __init__(self, db_id=0, ip="192.168.1.237", port=502, name="", test_port=0, messenger_queue=None,
-                 app_name="ElectricalSubstation_0",
+    def __init__(self, db_id:int=0, ip:str="192.168.1.237", port:int=502, name:str="", test_port:int=0, messenger_queue:Queue[list[str, int, int, int]]=None,
+                 app_name:str="ElectricalSubstation_0",
                  line_monitoring_queue=None,
                  electrical_substation_queue=None):
         from core.theme.pic import Pics
 
-        self.DBid = db_id #: Doc comment *inline* with attribute
+        self.DBid = db_id
         self.deleteMark = Pics.deleteMark
         self.checkMark = Pics.checkMark
         self.Port = port
@@ -448,7 +449,7 @@ class GateWay:
             self.first_good = False
             self.disc_msg_sent = False
 
-    def test(self, data):
+    def test(self, data:int)->None:
         """
         test DAUnits that is alive or not with make a port on and
         Args:
@@ -459,14 +460,14 @@ class GateWay:
             self.MessengerQ.put([VirtualText.format(Name=self.Name, format=self.TestPort, data=data), -2, -4, 2])
         # self.lbl_Test.setText(str(data))
 
-    def counter(self):
+    def counter(self)->None:
         data = int(self.client.read_holding_registers(register_for_counter, 1)[0])
         if data > 32767:
             data = data - 65536
         self.ret_num = data
         # self.PLC_Counter_lbl.setText(str(self.ret_num))
 
-    def cal_sleep_time(self):
+    def cal_sleep_time(self)->None:
         dps = self.DPS * 1.2
         if not (dps * 1.3 > self.RPS > dps):
             if dps >= self.RPS:
@@ -483,7 +484,7 @@ class GateWay:
             self.read_data = False
         self.SleepTime = round(self.SleepTime, 2)
 
-    def restart_thread(self):
+    def restart_thread(self)->None:
         if not (self.ReadingDataThread.is_alive()):
             self.stop_thread = False
             self.ReadingDataThread = threading.Thread(target=self.thread_func,
@@ -491,7 +492,7 @@ class GateWay:
             self.ReadingDataThread.start()
             Logging.da_log("Restart PLC " + self.Name, "PLC " + self.Name + " restart")
 
-    def line_monitoring_read_data_from_plc_thread(self, stop_thread):
+    def line_monitoring_read_data_from_plc_thread(self, stop_thread: Callable[[], bool])->None:
         sleep(1)
         now_sleep = datetime.now()
         while True:
@@ -544,6 +545,7 @@ class GateWay:
                 break
 
     def line_monitoring_read_data_from_plc(self):
+        # Todo:in doros nashode bayad doros she az nazar annotation
         self.client.write_single_coil(register_for_start_read, True)
         data = self.client.read_holding_registers(register_for_data, 1)
         self.client.write_single_coil(register_for_end_read, True)
@@ -560,7 +562,7 @@ class GateWay:
         else:
             return None, None
 
-    def electrical_substation_read_data_from_plc_thread(self, stop_thread):
+    def electrical_substation_read_data_from_plc_thread(self, stop_thread: Callable[[], bool])->None:
         sleep(1)
         now_sleep = datetime.now()
         while True:
@@ -600,7 +602,7 @@ class GateWay:
                             data = self.electrical_substation_data_from_plc(this_unit_id)
                             i.last_read_time_from_device = datetime.now()
 
-                            if data is not None:
+                            if data["substation_id"] != 0:
                                 if data:
                                     self.DataCounter += 1
                                     self.read_data = True
@@ -619,7 +621,7 @@ class GateWay:
                     Logging.da_log("send and receive " + str(self.DBid), str(e))
                     break
 
-    def electrical_substation_data_from_plc(self, rs_485_address):
+    def electrical_substation_data_from_plc(self, rs_485_address: int) -> dict[str, Union[int, float]]:
         self.client.unit_id(rs_485_address)
 
         incoming_data_part1 = self.multiple_register_read("holding", 3000, 17, "FLOAT32")
@@ -634,7 +636,6 @@ class GateWay:
             incoming_data_part7 = self.multiple_register_read("holding", 3272, 4, "INT64")
             incoming_data_part8 = self.multiple_register_read("holding", 3304, 12, "INT64")
             incoming_data_part9 = self.multiple_register_read("holding", 3518, 9, "INT64")
-
             try:
                 if incoming_data_part1 is not None:
                     incoming_data = incoming_data_part1 + \
@@ -647,7 +648,7 @@ class GateWay:
                                     incoming_data_part8 + \
                                     incoming_data_part9
                 else:
-                    return None
+                    return {"substation_id": 0}
 
                 dict_data_out = {
                     "substation_id": self.electrical_substation_id,
@@ -758,7 +759,7 @@ class GateWay:
             except:
                 print("Error in Read Data From PM2100")
         else:
-            return None
+            return {"substation_id": 0}
 
     def single_register_read(self, _input_or_holding, _address, _data_type, _big_endian=False):
         data = 0
@@ -831,8 +832,8 @@ class GateWay:
             if data:
                 while len(data) >= 4:
                     this_int_64 = (data[0:4][3] << 16 * 3) + (data[0:4][2] << 16 * 2) + (data[0:4][1] << 16 * 1) + \
-                                 data[0:4][
-                                     0]
+                                  data[0:4][
+                                      0]
                     list_int_64.append(this_int_64)
                     del data[0:4]
 

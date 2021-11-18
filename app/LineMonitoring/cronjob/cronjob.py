@@ -8,7 +8,7 @@ from core.config.Config import main_cronjob_merge_url, cronjob_timeout, merge_ti
 
 
 class Cronjob:
-    def __init__(self, sender_state_func, merge_time=merge_time):
+    def __init__(self, sender_state_func, merge_time: datetime = merge_time) -> None:
         self.LastMerge = datetime.now()
         self.last_check = datetime.now()
         self.MergeTime = merge_time

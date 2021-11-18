@@ -5,13 +5,15 @@ from threading import Thread
 from persiantools.jdatetime import JalaliDateTime
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
-from app.LineMonitoring.model.CamSwitch import find_switch_choose
-from app.LineMonitoring.model.Sensor import find_sensor_choose
+from app.LineMonitoring.model.CamSwitch import find_switch_choose, CamSwitch
+from app.LineMonitoring.model.Sensor import find_sensor_choose, Sensor
 from core.config.Config import off_cam_switch_value, on_cam_switch_value
 
 
 class RenderingDataThread:
-    def __init__(self, sensor, switch, messenger_queue=None,  ui=None):
+    def __init__(self, sensor: list[Sensor], switch: list[CamSwitch],
+                 messenger_queue: Queue[list[str, int, int, int]] = None, ui=None) -> None:
+
         self.ui = ui
         self.switch = switch
         self.sensor = sensor
@@ -60,7 +62,8 @@ class RenderingDataThread:
                                 [on_sensor_bale_text, sensor_chosen.unit, sensor_chosen.phase, 1])
                     if sms_report_flag:
                         now1 = JalaliDateTime.to_jalali(datetime.now()).strftime('در %y/%m/%d ساعت %H:%M:%S')
-                        on_sensor_sms_text = str(sensor_chosen.label) + " فاز " + str(sensor_chosen.phaseLabel) + " " + str(
+                        on_sensor_sms_text = str(sensor_chosen.label) + " فاز " + str(
+                            sensor_chosen.phaseLabel) + " " + str(
                             now1) + "روشن شده است"
                         self.messenger_queue.put([on_sensor_sms_text, sensor_chosen.unit, sensor_chosen.phase, 2])
 

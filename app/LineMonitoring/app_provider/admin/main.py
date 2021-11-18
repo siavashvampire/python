@@ -19,6 +19,14 @@ from core.theme.pic import Pics
 
 
 class LineMonitoring:
+    mergeData: Cronjob
+    sensors: list[Sensor]
+    switch: list[CamSwitch]
+    stop_thread: bool
+    Thread: Thread
+    RDThread: RenderingDataThread
+    state: bool
+
     def __init__(self, messenger_queue, sender_queue, sender_state_func, thread_label, ui):
         self.ui = ui
         self.state = False
