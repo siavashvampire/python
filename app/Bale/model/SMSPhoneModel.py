@@ -3,7 +3,7 @@ from core.config.Config import sms_username, sms_password, sms_phone, phone_time
 
 
 class SMSPhoneData:
-    def __init__(self, name, phone, units, phase, access=0):
+    def __init__(self, name: str, phone: int, units: str, phase: str, access: bool = 0) -> None:
         self.Name = str(name)
         self.Phone = int(phone)
         units = units.split(",")
@@ -17,7 +17,7 @@ class SMSPhoneData:
             self.phase.append(int(i))
         self.Access = int(access)
 
-    def check_id(self, id_in):
+    def check_id(self, id_in: int) -> bool:
         if id_in > 0:
             if -4 in self.Units:
                 return True
@@ -25,7 +25,7 @@ class SMSPhoneData:
             return True
         return False
 
-    def check_phase(self, phase):
+    def check_phase(self, phase: int) -> bool:
         if phase == -4:
             return True
         if -4 in self.phase:
@@ -34,14 +34,13 @@ class SMSPhoneData:
             return True
         return False
 
-    def check(self, id_temp, phase):
+    def check(self, id_temp: int, phase: int) -> bool:
         if self.check_id(id_temp) and self.check_phase(phase):
             return True
         return False
 
-    def send(self, text):
+    def send(self, text: str) -> str:
         querystring = {"from": sms_phone, "to": "0" + str(self.Phone), "msg": text, "uname": sms_username,
                        "pass": sms_password}
 
-        r = site_connection(sms_phone_send_url, phone_timeout, params=querystring)[1]
-        return r
+        return site_connection(sms_phone_send_url, phone_timeout, params=querystring)[1]

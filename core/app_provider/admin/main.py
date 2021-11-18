@@ -2,6 +2,7 @@ import os
 from time import sleep
 from datetime import datetime
 from threading import Thread
+from typing import Callable
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
 import singleton
@@ -120,7 +121,7 @@ class Main:
         self.start_splash.finish(self.main_ui)
         self.login_ui.show()
 
-    def main_thread(self, stop_thread):
+    def main_thread(self, stop_thread: Callable[[], bool]) -> None:
         while True:
             sleep(5)
             try:

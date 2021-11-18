@@ -3,6 +3,7 @@ import time
 import winsound
 from datetime import datetime
 from time import sleep
+from typing import Callable
 
 from dateutil.relativedelta import relativedelta
 from persiantools.jdatetime import JalaliDateTime
@@ -227,7 +228,7 @@ class Delta12SE:
             self.ReadingDataThread.start()
             Logging.da_log("Restart PLC " + self.Name, "PLC " + self.Name + " restart")
 
-    def line_monitoring_read_data_from_plc_thread(self, stop_thread):
+    def line_monitoring_read_data_from_plc_thread(self, stop_thread: Callable[[], bool])->None:
         sleep(1)
         now_sleep = datetime.now()
         while True:

@@ -3,13 +3,14 @@ from time import sleep
 from datetime import datetime
 from queue import Queue
 from threading import Thread
-from typing import List
+from typing import List, Union, Callable
 
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from PyQt5.QtWidgets import QLabel
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Dispatcher
 from tinydb import TinyDB
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
-from app.Bale.model.PhoneModel import PhoneData as Phones, PhoneData
+from app.Bale.model.PhoneModel import PhoneData
 from app.Bale.model.SMSPhoneModel import SMSPhoneData as SMSPhones
 from app.LineMonitoring.app_provider.api.ReadText import EnrollOK, EnrollRepeat, ActiveText, DeactivationText, \
     CheckingText, SendExportText, SendingHelpText, PDFReport, CSVReport, NotInsert, BlockText, HelpText, \
@@ -21,8 +22,7 @@ from core.RH.ResponseHandler import PhoneNumberResponseHandler as RHPhone
 from core.app_provider.api.get import site_connection, get_from_site_db
 from core.config.Config import bale_token, bale_base_url, phone_db_path, sms_phone_db_path, main_get_activity_url, \
     main_get_counter_url, main_export_url, bale_get_timeout, help_file_name, help_pdf_timeout, login_developer, \
-    phones_get_timeout, phone_table_name, sms_phone_table_name, \
-    main_get_sms_phones_url, main_get_phones_url
+    phones_get_timeout, phone_table_name, sms_phone_table_name, main_get_sms_phones_url, main_get_phones_url
 from core.model.DataType import bale_data, bale_app_name
 from core.theme.pic import Pics
 
@@ -81,22 +81,37 @@ def get_sensor_activity(units, phase):
 
 
 class BaleMain:
+    Flag_Bale: bool
+    should_stop: bool
+    state: bool
+    stop_check: bool
+    Trying: bool
+    stop_thread: bool
+    BaleStatus_label: QLabel
+    thread_label: QLabel
+    data_type: dict[str, Union[int, str]]
+    sender_queue: Queue
+    updater: Updater
+    TextQ: Queue[list[str, int, int, int]]
     phones_bale: List[PhoneData]
     phones_SMS: List[SMSPhones]
 
-    def __init__(self, sender_queue, bale_status_label=None, thread_label=None):
+    def __init__(self, sender_queue: Queue, bale_status_label: QLabel = None, thread_label: QLabel = None) -> None:
+        # Todo:on bala k jelo QLable None has bayad doros beshe None mani nemide
         self.Flag_Bale = False
         self.should_stop = False
         self.state = False
         self.stop_check = False
         self.Trying = False
         self.stop_thread = False
+        self.phones_bale = []
+        self.phones_SMS = []
         self.BaleStatus_label = bale_status_label
-        self.data_type = bale_data
         self.thread_label = thread_label
+        self.data_type = bale_data
         self.sender_queue = sender_queue
         self.updater = Updater(token=bale_token, base_url=bale_base_url)
-        dp = self.updater.dispatcher
+        dp: Dispatcher = self.updater.dispatcher
         self.TextQ = Queue()
         self.create_phones()
 
@@ -123,14 +138,14 @@ class BaleMain:
         self.SendThread.start()
         Logging.bale_log("Bale Init", "SendThread is run")
 
-    def create_phones(self):
+    def create_phones(self) -> None:
         r = TinyDB(phone_db_path).table(phone_table_name).all()
         phones = TinyDB(sms_phone_db_path).table(sms_phone_table_name).all()
-        self.phones_bale = [Phones(i["name"], i["phone"], i["send_allow"], i["units"], i["phase"], i["access"]) for i in
-                            r]
+        self.phones_bale = [PhoneData(i["name"], i["phone"], i["send_allow"], i["units"], i["phase"], i["access"])
+                            for i in r]
         self.phones_SMS = [SMSPhones(i["name"], i["phone"], i["units"], i["phase"], i["access"]) for i in phones]
 
-    def send_to_phones(self, stop_thread):
+    def send_to_phones(self, stop_thread: Callable[[], bool]) -> None:
         while True:
             if self.Flag_Bale:
                 text, id_temp, phase, choose = self.TextQ.get()
@@ -179,7 +194,7 @@ class BaleMain:
                     print("stop Bale Send")
                     break
 
-    def open_bale(self, stop_thread):
+    def open_bale(self, stop_thread: Callable[[], bool]) -> None:
         now = datetime.now()
         first = True
         while True:
@@ -208,7 +223,7 @@ class BaleMain:
                         self.Trying = False
             sleep(20)
 
-    def enroll(self, bot, update):
+    def enroll(self, bot, update) -> None:
         # TODO: bayad intori beshe k mostaghim befreste vase site v az to site ham update kone
         name = update.message.from_user.first_name
         id_temp = update.message.chat.id
@@ -221,10 +236,10 @@ class BaleMain:
         else:
             update.message.reply_text(EnrollRepeat.format(Name=name, id=id_temp))
 
-    def all_counter(self, bot, update):
+    def all_counter(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == Phones:
+        if type(acc) == PhoneData:
             try:
                 update.message.reply_text(get_online_counter(acc.get_abs_unit_id(), acc.get_phase()))
             except Exception as e:
@@ -234,10 +249,10 @@ class BaleMain:
         elif type(acc) == str:
             update.message.reply_text(acc)
 
-    def all_activity(self, bot, update):
+    def all_activity(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == Phones:
+        if type(acc) == PhoneData:
             try:
                 update.message.reply_text(get_sensor_activity(acc.get_abs_unit_id(), acc.get_phase()))
             except Exception as e:
@@ -247,10 +262,10 @@ class BaleMain:
         elif type(acc) == str:
             update.message.reply_text(acc)
 
-    def active_on_off(self, bot, update):
+    def active_on_off(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == Phones:
+        if type(acc) == PhoneData:
             try:
                 acc.on_off_active(1)
                 update.message.reply_text(ActiveText)
@@ -261,10 +276,10 @@ class BaleMain:
         elif type(acc) == str:
             update.message.reply_text(acc)
 
-    def deactivate_on_off(self, bot, update):
+    def deactivate_on_off(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == Phones:
+        if type(acc) == PhoneData:
             try:
                 acc.on_off_active(0)
                 update.message.reply_text(DeactivationText)
@@ -275,10 +290,10 @@ class BaleMain:
         elif type(acc) == str:
             update.message.reply_text(acc)
 
-    def shift_report_pdf(self, bot, update):
+    def shift_report_pdf(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == Phones:
+        if type(acc) == PhoneData:
             s = update.message.reply_text(text=PDFReport)
             payload = "showField%5B%5D=data.phase&showField%5B%5D=data.unitId&showField%5B%5D=CONCAT(" \
                       "data.tile_width%2C%20'%C3%97'%2C%20data.tile_length)&showField%5B%5D=data.tile_name" \
@@ -315,10 +330,10 @@ class BaleMain:
         elif type(acc) == str:
             update.message.reply_text(acc)
 
-    def shift_report_csv(self, bot, update):
+    def shift_report_csv(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == Phones:
+        if type(acc) == PhoneData:
             s = update.message.reply_text(text=CSVReport)
             payload = "showField%5B%5D=data.phase&showField%5B%5D=data.unitId&showField%5B%5D=CONCAT(" \
                       "data.tile_width%2C%20'%C3%97'%2C%20data.tile_length)&showField%5B%5D=data.tile_name" \
@@ -355,10 +370,10 @@ class BaleMain:
         elif type(acc) == str:
             update.message.reply_text(acc)
 
-    def shift_off_report_pdf(self, bot, update):
+    def shift_off_report_pdf(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == Phones:
+        if type(acc) == PhoneData:
             s = update.message.reply_text(text=PDFReport)
             payload = "showField%5B%5D=data.phase&showField%5B%5D=data.unitId&showField%5B%5D=arch1.reason" \
                       "&showField%5B%5D=arch1.description&showField%5B%5D=arch1.JStart_time&showField%5B%5D" \
@@ -392,10 +407,10 @@ class BaleMain:
         elif type(acc) == str:
             update.message.reply_text(acc)
 
-    def shift_off_report_csv(self, bot, update):
+    def shift_off_report_csv(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == Phones:
+        if type(acc) == PhoneData:
             s = update.message.reply_text(text=CSVReport)
             payload = "showField%5B%5D=data.phase&showField%5B%5D=data.unitId&showField%5B%5D=arch1.reason" \
                       "&showField%5B%5D=arch1.description&showField%5B%5D=arch1.JStart_time&showField%5B%5D" \
@@ -429,10 +444,10 @@ class BaleMain:
         elif type(acc) == str:
             update.message.reply_text(acc)
 
-    def help_pdf(self, bot, update):
+    def help_pdf(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == Phones:
+        if type(acc) == PhoneData:
             try:
                 s = update.message.reply_text(text=SendingHelpText)
                 update.message.reply_document(document=open(file=help_file_name + ".pdf", mode='rb'),
@@ -446,10 +461,10 @@ class BaleMain:
         elif type(acc) == str:
             update.message.reply_text(acc)
 
-    def help(self, bot, update):
+    def help(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == Phones:
+        if type(acc) == PhoneData:
             try:
                 update.message.reply_text(HelpText)
             except Exception as e:
@@ -459,11 +474,11 @@ class BaleMain:
         elif type(acc) == str:
             update.message.reply_text(acc)
 
-    def make_phone(self, bot, update):
+    def make_phone(self, bot, update) -> None:
         try:
             id_temp = update.message.chat.id
             acc = self.handle_access(id_temp)
-            if type(acc) == Phones:
+            if type(acc) == PhoneData:
                 if acc.check_developer_access():
                     try:
                         self.create_phones()
@@ -477,10 +492,10 @@ class BaleMain:
         except Exception as e:
             update.message.reply_text(e)
 
-    def show_access(self, bot, update):
+    def show_access(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == Phones:
+        if type(acc) == PhoneData:
             if acc.check_developer_access():
                 text_temp = ""
                 for i in self.phones_bale:
@@ -491,10 +506,10 @@ class BaleMain:
         elif type(acc) == str:
             update.message.reply_text(acc)
 
-    def checking_text(self, bot, update):
+    def checking_text(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == Phones:
+        if type(acc) == PhoneData:
             if acc.check_developer_access():
                 text = update.message.text
                 x = text.split(" : ")
@@ -516,7 +531,7 @@ class BaleMain:
         elif type(acc) == str:
             update.message.reply_text(acc)
 
-    def restart_thread(self):
+    def restart_thread(self) -> None:
         self.stop_thread = False
         if not (self.OpenThread.is_alive()):
             self.OpenThread = Thread(target=self.open_bale, args=(lambda: self.stop_thread,))
@@ -525,15 +540,15 @@ class BaleMain:
             self.SendThread = Thread(target=self.send_to_phones, args=(lambda: self.stop_thread,))
             self.SendThread.start()
 
-    def get_phone(self, id_temp):
+    def get_phone(self, id_temp: int) -> PhoneData:
         for i in self.phones_bale:
             if i.id == id_temp:
                 return i
-        return False
+        return PhoneData()
 
-    def handle_access(self, id_temp):
+    def handle_access(self, id_temp: int) -> Union[PhoneData, str]:
         phone = self.get_phone(id_temp)
-        if phone is False:
+        if not phone.id:
             return NotInsert
         else:
             if phone.check_access():
@@ -541,12 +556,12 @@ class BaleMain:
             else:
                 return BlockText
 
-    def check_command(self, id_temp, text):
+    def check_command(self, id_temp: int, text: str) -> tuple[bool, str]:
         iscommand = False
         phone = self.get_phone(id_temp)
         if text == "Access ON":
             iscommand = True
-            if type(phone) == Phones:
+            if phone.id:
                 phone.set_access(1)
                 self.create_phones()
                 self.updater.bot.send_message(id_temp, AccessONText)
@@ -554,18 +569,18 @@ class BaleMain:
 
         if text == "Access OFF":
             iscommand = True
-            if type(phone) == Phones:
+            if phone.id:
                 phone.set_access(0)
                 self.create_phones()
                 self.updater.bot.send_message(id_temp, AccessOFFText)
                 text = PhoneCreateText + AccessOFFText
 
-        if phone is False:
+        if not phone.id:
             text = "شماره در سامانه ثبت نشده"
 
         return iscommand, text
 
-    def state_thread(self, state=False, program=False):
+    def state_thread(self, state: bool = False, program: bool = False) -> None:
         if program is False:
             if self.state:
                 self.should_stop = True
@@ -580,23 +595,23 @@ class BaleMain:
             if state is False:
                 self.stop_func()
 
-    def start_func(self):
+    def start_func(self) -> None:
         self.stop_thread = False
         self.restart_thread()
         self.stop_check = False
         self.state = True
         self.thread_label.setIcon(Pics.ON)
 
-    def stop_func(self):
+    def stop_func(self) -> None:
         self.stop_thread = True
-        self.TextQ.put([0, 0, 0, 0])
+        self.TextQ.put(["", 0, 0, 0])
         self.stop_check = True
         self.state = False
         self.OpenThread.join()
         self.SendThread.join()
         self.thread_label.setIcon(Pics.OFF)
 
-    def check(self):
+    def check(self) -> None:
         if not (self.OpenThread.is_alive() and self.SendThread.is_alive()):
             if not self.stop_check:
                 self.stop_thread = False
@@ -609,7 +624,7 @@ class BaleMain:
                 self.thread_label.setIcon(Pics.ON)
                 self.state = True
 
-    def get_data(self, id_temp, name):
+    def get_data(self, id_temp: int, name: str) -> dict[str, Union[int, str]]:
         data_temp = dict(self.data_type)
         key = sorted(list(data_temp.keys()), key=self.key_order)
         data_temp[key[0]] = id_temp  # for id
@@ -617,7 +632,7 @@ class BaleMain:
         return data_temp
 
     @staticmethod
-    def key_order(key):
+    def key_order(key: str) -> int:
         import difflib
         app_order = ["id", "name"]
 
@@ -634,18 +649,18 @@ class BaleMain:
             return 0
 
     @staticmethod
-    def read_all_sms_phone():
+    def read_all_sms_phone() -> None:
         get_from_site_db(main_get_sms_phones_url, phones_get_timeout, sms_phone_db_path, sms_phone_table_name)
 
     @staticmethod
-    def read_all_phone():
+    def read_all_phone() -> None:
         get_from_site_db(main_get_phones_url, phones_get_timeout, phone_db_path, phone_table_name)
 
-    def db_update_all(self):
+    def db_update_all(self) -> None:
         # TODO:unit ghalate
         self.read_all_phone()
         self.read_all_sms_phone()
 
-    def update_system(self):
+    def update_system(self) -> None:
         self.db_update_all()
         self.create_phones()
