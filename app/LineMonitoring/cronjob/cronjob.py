@@ -8,10 +8,16 @@ from core.config.Config import main_cronjob_merge_url, cronjob_timeout, merge_ti
 
 
 class Cronjob:
-    def __init__(self, sender_state_func, merge_time: datetime = merge_time) -> None:
+    LastMerge: datetime
+    last_check: datetime
+    MergeTime: int
+    stop_thread: bool
+    Thread: Thread
+
+    def __init__(self, sender_state_func, merge_time_in: int = merge_time) -> None:
         self.LastMerge = datetime.now()
         self.last_check = datetime.now()
-        self.MergeTime = merge_time
+        self.MergeTime = merge_time_in
         self.sender_state_func = sender_state_func
         self.stop_thread = False
         self.Thread = Thread(target=self.merge_data_thread, args=(lambda: self.stop_thread,))
@@ -31,7 +37,7 @@ class Cronjob:
             if (datetime.now() - self.last_check).seconds > merge_check_time * 60:
                 diff = datetime.now() - self.LastMerge
                 hours = diff.seconds // 3600 + diff.days * 24
-                if hours >= int(self.MergeTime):
+                if hours >= self.MergeTime:
                     self.sender_state_func(state=False, program=True)
                     # TODO:check konim bebinim vai mise ya na
                     self.merge_data()

@@ -38,10 +38,12 @@ config_db.update({"help_pdf_timeout": str(help_pdf_timeout)})
 time_format = '%Y-%m-%d %H:%M:%S'
 send_time_format = '%y-%m-%d %H:%M:%S'
 day_time_format = '%Y/%m/%d'
+adminUnit = -3
 
 config_db.update({"time_format": str(time_format)})
 config_db.update({"send_time_format": str(send_time_format)})
 config_db.update({"day_time_format": str(day_time_format)})
+config_db.update({"adminUnit": adminUnit})
 # end  format Config
 
 # start  PLC Config

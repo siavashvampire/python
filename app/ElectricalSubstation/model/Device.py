@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Union
 
 from tinydb import TinyDB, Query
 
@@ -8,10 +9,20 @@ from core.model.DataType import Device_new_log_app, Device_new_log_class, Device
 
 
 class Device:
+    substation: int
+    unit: int
+    data_type: dict[str, Union[int, str]]
+    last_read_time_from_device: datetime
+    substation_name: str
+    name: str
+    device_type: int
+    refresh_time: int
     doc_id: int
 
-    def __init__(self, substation=0, substation_name=None, unit=None, name=None, device_type=None,
-                 refresh_time=None, sender_queue=None):
+    def __init__(self, substation: int = 0, substation_name: str = None, unit: int = 0, name: str = None,
+                 device_type: int = None,
+                 refresh_time: int = None,
+                 sender_queue=None) -> None:
         self.substation = substation
         self.substation_name = substation_name
         self.unit = unit
@@ -23,9 +34,9 @@ class Device:
         self.last_read_time_from_device = datetime.now()
 
         if self.substation and self.unit:
-            self.update(self.substation, self.unit)
+            self.update()
 
-    def send(self, values):
+    def send(self, values: dict[str, Union[int, float]]) -> None:
         if self.sender_queue is not None:
             self.sender_queue.put(
                 {"app": Device_new_log_app,
@@ -33,7 +44,9 @@ class Device:
                  "method": Device_new_log_method,
                  "data": self.get_data(values, datetime.now().strftime(time_format))})
 
-    def update(self, substation=0, unit=0):
+    def update(self) -> None:
+        substation: int = self.substation
+        unit: int = self.unit
         prop = Query()
         db = TinyDB(device_db_path).table(device_table_name)
         sea = db.search((prop.substation_id == substation) & (prop.unitId == unit))
@@ -48,7 +61,7 @@ class Device:
             # TODO: Ejade log baraye else
             pass
 
-    def get_data(self, value, time):
+    def get_data(self, value: dict[str, Union[int, float]], time: str) -> dict[str, Union[int, float]]:
 
         data_temp = dict(self.data_type)
         key = sorted(list(data_temp.keys()), key=self.key_order)
@@ -155,7 +168,7 @@ class Device:
         return data_temp
 
     @staticmethod
-    def key_order(key):
+    def key_order(key: str) -> int:
         import difflib
         app_order = ["substation_id",
                      "unitId",
@@ -248,179 +261,180 @@ class Device:
         key = difflib.get_close_matches(key, app_order)
 
         if len(key) != 0:
-            if key[0] == "substation_id":
+            key = key[0]
+            if key == "substation_id":
                 return 1
-            elif key[0] == "unitId":
+            elif key == "unitId":
                 return 2
-            elif key[0] == "Start_time":
+            elif key == "Start_time":
                 return 3
-            elif key[0] == "Current_A":
+            elif key == "Current_A":
                 return 4
-            elif key[0] == "Current_B":
+            elif key == "Current_B":
                 return 5
-            elif key[0] == "Current_C":
+            elif key == "Current_C":
                 return 6
-            elif key[0] == "Current_N":
+            elif key == "Current_N":
                 return 7
-            elif key[0] == "Current_G":
+            elif key == "Current_G":
                 return 8
-            elif key[0] == "Current_Avg":
+            elif key == "Current_Avg":
                 return 9
-            elif key[0] == "Current_Unbalance_A":
+            elif key == "Current_Unbalance_A":
                 return 10
-            elif key[0] == "Current_Unbalance_B":
+            elif key == "Current_Unbalance_B":
                 return 11
-            elif key[0] == "Current_Unbalance_C":
+            elif key == "Current_Unbalance_C":
                 return 12
-            elif key[0] == "Current_Unbalance_Worst":
+            elif key == "Current_Unbalance_Worst":
                 return 13
-            elif key[0] == "Voltage_A_B":
+            elif key == "Voltage_A_B":
                 return 14
-            elif key[0] == "Voltage_B_C":
+            elif key == "Voltage_B_C":
                 return 15
-            elif key[0] == "Voltage_C_A":
+            elif key == "Voltage_C_A":
                 return 16
-            elif key[0] == "Voltage_L_L_Avg":
+            elif key == "Voltage_L_L_Avg":
                 return 17
-            elif key[0] == "Voltage_A_N":
+            elif key == "Voltage_A_N":
                 return 18
-            elif key[0] == "Voltage_B_N":
+            elif key == "Voltage_B_N":
                 return 19
-            elif key[0] == "Voltage_C_N":
+            elif key == "Voltage_C_N":
                 return 20
-            elif key[0] == "Voltage_L_N_Avg":
+            elif key == "Voltage_L_N_Avg":
                 return 21
-            elif key[0] == "Voltage_Unbalance_A_B":
+            elif key == "Voltage_Unbalance_A_B":
                 return 22
-            elif key[0] == "Voltage_Unbalance_B_C":
+            elif key == "Voltage_Unbalance_B_C":
                 return 23
-            elif key[0] == "Voltage_Unbalance_C_A":
+            elif key == "Voltage_Unbalance_C_A":
                 return 24
-            elif key[0] == "Voltage_Unbalance_L_L_Worst":
+            elif key == "Voltage_Unbalance_L_L_Worst":
                 return 25
-            elif key[0] == "Voltage_Unbalance_A_N":
+            elif key == "Voltage_Unbalance_A_N":
                 return 26
-            elif key[0] == "Voltage_Unbalance_B_N":
+            elif key == "Voltage_Unbalance_B_N":
                 return 27
-            elif key[0] == "Voltage_Unbalance_C_N":
+            elif key == "Voltage_Unbalance_C_N":
                 return 28
-            elif key[0] == "Voltage_Unbalance_L_N_Worst":
+            elif key == "Voltage_Unbalance_L_N_Worst":
                 return 29
-            elif key[0] == "Active_Power_A":
+            elif key == "Active_Power_A":
                 return 30
-            elif key[0] == "Active_Power_B":
+            elif key == "Active_Power_B":
                 return 31
-            elif key[0] == "Active_Power_C":
+            elif key == "Active_Power_C":
                 return 32
-            elif key[0] == "Active_Power_Total":
+            elif key == "Active_Power_Total":
                 return 33
-            elif key[0] == "Reactive_Power_A":
+            elif key == "Reactive_Power_A":
                 return 34
-            elif key[0] == "Reactive_Power_B":
+            elif key == "Reactive_Power_B":
                 return 35
-            elif key[0] == "Reactive_Power_C":
+            elif key == "Reactive_Power_C":
                 return 36
-            elif key[0] == "Reactive_Power_Total":
+            elif key == "Reactive_Power_Total":
                 return 38
-            elif key[0] == "Apparent_Power_A":
+            elif key == "Apparent_Power_A":
                 return 39
-            elif key[0] == "Apparent_Power_B":
+            elif key == "Apparent_Power_B":
                 return 40
-            elif key[0] == "Apparent_Power_C":
+            elif key == "Apparent_Power_C":
                 return 41
-            elif key[0] == "Apparent_Power_Total":
+            elif key == "Apparent_Power_Total":
                 return 42
-            elif key[0] == "Power_Factor_A":
+            elif key == "Power_Factor_A":
                 return 43
-            elif key[0] == "Power_Factor_B":
+            elif key == "Power_Factor_B":
                 return 44
-            elif key[0] == "Power_Factor_C":
+            elif key == "Power_Factor_C":
                 return 45
-            elif key[0] == "Power_Factor_Total":
+            elif key == "Power_Factor_Total":
                 return 46
-            elif key[0] == "Displacement_Power_Factor_A":
+            elif key == "Displacement_Power_Factor_A":
                 return 47
-            elif key[0] == "Displacement_Power_Factor_B":
+            elif key == "Displacement_Power_Factor_B":
                 return 48
-            elif key[0] == "Displacement_Power_Factor_C":
+            elif key == "Displacement_Power_Factor_C":
                 return 49
-            elif key[0] == "Displacement_Power_Factor_Total":
+            elif key == "Displacement_Power_Factor_Total":
                 return 50
-            elif key[0] == "Frequency":
+            elif key == "Frequency":
                 return 51
-            elif key[0] == "Active_Energy_Delivered_Into_Load":
+            elif key == "Active_Energy_Delivered_Into_Load":
                 return 52
-            elif key[0] == "Active_Energy_Received_Out_of_Load":
+            elif key == "Active_Energy_Received_Out_of_Load":
                 return 53
-            elif key[0] == "Active_Energy_Delivered_Pos_Received":
+            elif key == "Active_Energy_Delivered_Pos_Received":
                 return 54
-            elif key[0] == "Active_Energy_Delivered_Neg_Received":
+            elif key == "Active_Energy_Delivered_Neg_Received":
                 return 55
-            elif key[0] == "Reactive_Energy_Delivered":
+            elif key == "Reactive_Energy_Delivered":
                 return 56
-            elif key[0] == "Reactive_Energy_Received":
+            elif key == "Reactive_Energy_Received":
                 return 57
-            elif key[0] == "Reactive_Energy_Delivered_Pos_Received":
+            elif key == "Reactive_Energy_Delivered_Pos_Received":
                 return 58
-            elif key[0] == "Reactive_Energy_Delivered_Neg_Received":
+            elif key == "Reactive_Energy_Delivered_Neg_Received":
                 return 59
-            elif key[0] == "Apparent_Energy_Delivered":
+            elif key == "Apparent_Energy_Delivered":
                 return 60
-            elif key[0] == "Apparent_Energy_Received":
+            elif key == "Apparent_Energy_Received":
                 return 61
-            elif key[0] == "Apparent_Energy_Delivered_Pos_Received":
+            elif key == "Apparent_Energy_Delivered_Pos_Received":
                 return 62
-            elif key[0] == "Apparent_Energy_Delivered_Neg_Received":
+            elif key == "Apparent_Energy_Delivered_Neg_Received":
                 return 63
-            elif key[0] == "Reactive_Energy_in_Quadrant_I":
+            elif key == "Reactive_Energy_in_Quadrant_I":
                 return 64
-            elif key[0] == "Reactive_Energy_in_Quadrant_II":
+            elif key == "Reactive_Energy_in_Quadrant_II":
                 return 65
-            elif key[0] == "Reactive_Energy_in_Quadrant_III":
+            elif key == "Reactive_Energy_in_Quadrant_III":
                 return 66
-            elif key[0] == "Reactive_Energy_in_Quadrant_IV":
+            elif key == "Reactive_Energy_in_Quadrant_IV":
                 return 67
-            elif key[0] == "Active_Energy_Delivered_Into_Load_Permanent":
+            elif key == "Active_Energy_Delivered_Into_Load_Permanent":
                 return 68
-            elif key[0] == "Active_Energy_Received_Out_of_Load_Permanent":
+            elif key == "Active_Energy_Received_Out_of_Load_Permanent":
                 return 69
-            elif key[0] == "Active_Energy_Delivered_Pos_Received_Permanent":
+            elif key == "Active_Energy_Delivered_Pos_Received_Permanent":
                 return 70
-            elif key[0] == "Active_Energy_Delivered_Neg_Received_Permanent":
+            elif key == "Active_Energy_Delivered_Neg_Received_Permanent":
                 return 71
-            elif key[0] == "Reactive_Energy_Delivered_Permanent":
+            elif key == "Reactive_Energy_Delivered_Permanent":
                 return 72
-            elif key[0] == "Reactive_Energy_Received_Permanent":
+            elif key == "Reactive_Energy_Received_Permanent":
                 return 73
-            elif key[0] == "Reactive_Energy_Delivered_Pos_Received_Permanent":
+            elif key == "Reactive_Energy_Delivered_Pos_Received_Permanent":
                 return 74
-            elif key[0] == "Reactive_Energy_Delivered_Neg_Received_Permanent":
+            elif key == "Reactive_Energy_Delivered_Neg_Received_Permanent":
                 return 75
-            elif key[0] == "Apparent_Energy_Delivered_Permanent":
+            elif key == "Apparent_Energy_Delivered_Permanent":
                 return 76
-            elif key[0] == "Apparent_Energy_Received_Permanent":
+            elif key == "Apparent_Energy_Received_Permanent":
                 return 77
-            elif key[0] == "Apparent_Energy_Delivered_Pos_Received_Permanent":
+            elif key == "Apparent_Energy_Delivered_Pos_Received_Permanent":
                 return 78
-            elif key[0] == "Apparent_Energy_Delivered_Neg_Received_Permanent":
+            elif key == "Apparent_Energy_Delivered_Neg_Received_Permanent":
                 return 79
-            elif key[0] == "Active_Energy_Delivered_Phase_A":
+            elif key == "Active_Energy_Delivered_Phase_A":
                 return 80
-            elif key[0] == "Active_Energy_Delivered_Phase_B":
+            elif key == "Active_Energy_Delivered_Phase_B":
                 return 81
-            elif key[0] == "Active_Energy_Delivered_Phase_C":
+            elif key == "Active_Energy_Delivered_Phase_C":
                 return 82
-            elif key[0] == "Reactive_Energy_Delivered_Phase_A":
+            elif key == "Reactive_Energy_Delivered_Phase_A":
                 return 83
-            elif key[0] == "Reactive_Energy_Delivered_Phase_B":
+            elif key == "Reactive_Energy_Delivered_Phase_B":
                 return 84
-            elif key[0] == "Reactive_Energy_Delivered_Phase_C":
+            elif key == "Reactive_Energy_Delivered_Phase_C":
                 return 85
-            elif key[0] == "Apparent_Energy_Delivered_Phase_A":
+            elif key == "Apparent_Energy_Delivered_Phase_A":
                 return 86
-            elif key[0] == "Apparent_Energy_Delivered_Phase_B":
+            elif key == "Apparent_Energy_Delivered_Phase_B":
                 return 87
-            elif key[0] == "Apparent_Energy_Delivered_Phase_C":
+            elif key == "Apparent_Energy_Delivered_Phase_C":
                 return 88
             else:
                 return 0

@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
+from queue import Queue
 from threading import Thread
 from time import sleep
 
+from PyQt5.QtWidgets import QLabel
 from persiantools.jdatetime import JalaliDateTime
 from tinydb import TinyDB
 
@@ -19,15 +21,20 @@ from core.theme.pic import Pics
 
 
 class LineMonitoring:
+    state: bool
+    stop_check: bool
+    should_stop: bool
+    thread_label: QLabel
+    messenger_queue: Queue[list[str, int, int, int]]
     mergeData: Cronjob
     sensors: list[Sensor]
     switch: list[CamSwitch]
     stop_thread: bool
     Thread: Thread
     RDThread: RenderingDataThread
-    state: bool
 
-    def __init__(self, messenger_queue, sender_queue, sender_state_func, thread_label, ui):
+    def __init__(self, messenger_queue: Queue[list[str, int, int, int]], sender_queue, sender_state_func,
+                 thread_label: QLabel, ui):
         self.ui = ui
         self.state = False
         self.stop_check = False
@@ -39,6 +46,7 @@ class LineMonitoring:
         self.ArchiveQ = sender_queue
         self.sensors = []
         self.switch = []
+        self.update_system()
         self.create_sensors()
         self.stop_thread = False
         self.Thread = Thread(target=self.line_monitoring,
@@ -163,7 +171,7 @@ class LineMonitoring:
         self.stop_thread = True
         self.Thread.join()
         self.RDThread.stop_thread = True
-        self.RDThread.DataQ.put([0, None])
+        self.RDThread.DataQ.put([0, 0])
         self.RDThread.Thread.join()
         self.stop_check = True
         self.state = False
@@ -177,12 +185,10 @@ class LineMonitoring:
         self.state = True
         self.thread_label.setIcon(Pics.ON)
 
-    def update_system(self, where_should_update):
+    def update_system(self, where_should_update=("sensor_update", "switch_update")):
         if "sensor_update" in where_should_update:
             self.read_all_switch_data()
-            print("omad sensor")
         if "switch_update" in where_should_update:
             self.read_all_sensor_data()
-            print("omad switch")
 
         self.create_sensors()

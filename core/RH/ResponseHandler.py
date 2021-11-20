@@ -107,7 +107,7 @@ def send_data_rh(r, status):
             temp_index += 1
 
     else:
-        r = r["message"]
-        index = r["indexOfProblem"]
-        error = r["result"]
+        print(r)
+        index = []
+        error = []
     return good, index, error

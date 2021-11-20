@@ -1,11 +1,12 @@
 import threading
-import time
 import winsound
 from datetime import datetime
 from queue import Queue
+from threading import Thread
 from time import sleep
 from typing import Callable, Union
 
+from PyQt5.QtGui import QPixmap
 from dateutil.relativedelta import relativedelta
 from persiantools.jdatetime import JalaliDateTime
 from pyModbusTCP import utils
@@ -14,6 +15,7 @@ from tinydb import TinyDB
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
 from app.ElectricalSubstation.app_provider.admin.main import get_devices_by_substation_id
+from app.ElectricalSubstation.model.Device import Device
 from app.LineMonitoring.app_provider.api.LastLog import getABSecond, getText
 from app.LineMonitoring.app_provider.api.ReadText import PLCConnectBaleText, PLCDisconnectBaleText, VirtualText
 from core.config.Config import da_unit_db_path, modbus_timeout, plc_time_sleep_max, plc_time_sleep_min, \
@@ -46,17 +48,42 @@ def extract_choose(data: int) -> tuple[int, int]:
     return choose, data
 
 
-def electrical_extract_choose(data: int) -> list[int]:
-    return [data['substation_id'], data['unitId']]
+def electrical_extract_choose(data: dict[str, Union[int, float]]) -> tuple[int, int]:
+    return data['substation_id'], data['unitId']
 
 
 class Delta12SE:
-    app: object
+    DBid: int
+    deleteMark: QPixmap
+    checkMark: QPixmap
+    ret_num: int
+    disc_msg_sent: bool
+    Connected: bool
+    first_good: bool
+    first_bad: bool
+    SleepTime: int
+    ReadCounter: int
+    DataCounter: int
+    DPS: int
+    RPS: int
+    TimeDis: datetime
+    DiffTime: relativedelta
+    thread_func: Callable[[Callable[[], bool]], None]
+    MessengerQ: Queue[list[str, int, int, int]]
+    line_monitoring_queue: Queue[list[int, int]]
+    stop_thread: bool
+    ReadingDataThread: Thread
+    Port: int
+    TestPort: int
+    app_name: str
+    IP: str
+    Name: str
+    client: ModbusClient
 
-    def __init__(self, db_id=0, ip="192.168.1.240", port=502, name="", test_port=0, messenger_queue=None,
-                 app_name="Mersad Monitoring System",
-                 line_monitoring_queue=None,
-                 electrical_substation_queue=None):
+    def __init__(self, db_id: int = 0, ip: str = "192.168.1.240", port: int = 502, name: str = "", test_port: int = 0,
+                 messenger_queue: Queue[list[str, int, int, int]] = None,
+                 app_name: str = "LineMonitoring",
+                 line_monitoring_queue: Queue[list[int, int]] = None) -> None:
         from core.theme.pic import Pics
 
         self.DBid = db_id
@@ -77,22 +104,15 @@ class Delta12SE:
         self.DataCounter = 0
         self.DPS = 0
         self.RPS = 0
-        self.TimeDis = False
-        self.DiffTime = False
-        if self.app_name == "Mersad Monitoring System":
-            self.thread_func = self.line_monitoring_read_data_from_plc_thread
 
-        # TODO: age app dg bod chi kar kone??
+        self.TimeDis = datetime.now()
+        self.DiffTime = relativedelta()
 
         if messenger_queue is not None:
             self.MessengerQ = messenger_queue
-        self.client = ModbusClient(host=self.IP, port=self.Port, auto_open=True, auto_close=False,
-                                   timeout=modbus_timeout, debug=False)
+
         self.line_monitoring_queue = line_monitoring_queue
-        self.electrical_substation_queue = electrical_substation_queue
         self.stop_thread = False
-        self.ReadingDataThread = threading.Thread(target=self.thread_func,
-                                                  args=(lambda: self.stop_thread,))
 
         if db_id:
             self.update()
@@ -127,13 +147,21 @@ class Delta12SE:
     def update(self):
         sea = TinyDB(da_unit_db_path).table(da_unit_table_name).get(doc_id=self.DBid)
         self.Port = 502
-        self.TestPort = sea["testPort"]
-        self.app = sea["app"]
+        self.TestPort = int(sea["testPort"])
+        self.app_name = sea["app"]
         self.IP = sea["IP"]
         self.Name = sea["label"]
 
         self.client = ModbusClient(host=self.IP, port=self.Port, auto_open=True, auto_close=False,
                                    timeout=modbus_timeout, debug=False)
+
+        if self.app_name == "LineMonitoring":
+            self.thread_func = self.line_monitoring_read_data_from_plc_thread
+
+        self.ReadingDataThread = threading.Thread(target=self.thread_func,
+                                                  args=(lambda: self.stop_thread,))
+
+        # TODO: age app dg bod chi kar kone??
 
     def disconnect(self):
         if self.first_bad:
@@ -172,7 +200,7 @@ class Delta12SE:
                 winsound.Beep(3000, 100)
                 winsound.Beep(4000, 100)
                 winsound.Beep(5000, 100)
-            except Exception as e:
+            except:
                 pass
             if self.disc_msg_sent:
                 now1 = JalaliDateTime.to_jalali(datetime.now()).strftime(send_time_format)
@@ -300,12 +328,43 @@ class Delta12SE:
 
 
 class GateWay:
-    app: str
+    DBid: int
+    deleteMark: QPixmap
+    checkMark: QPixmap
+    ret_num: int
+    disc_msg_sent: bool
+    Connected: bool
+    first_good: bool
+    first_bad: bool
+    SleepTime: int
+    ReadCounter: int
+    DataCounter: int
+    DPS: int
+    RPS: int
+    TimeDis: datetime
+    DiffTime: relativedelta
+    read_data: bool
+    MessengerQ: Queue[list[str, int, int, int]]
+    line_monitoring_queue: Queue[list[int, int]]
+    electrical_substation_queue: Queue[list[tuple[int, int], dict[str, Union[int, float]]]]
+    thread_func: Callable[[Callable[[], bool]], None]
+    stop_thread: bool
+    Port: int
+    TestPort: int
+    IP: str
+    Name: str
+    client: ModbusClient
+    ReadingDataThread: Thread
+    electrical_devices: list[Device]
+    electrical_substation_id: int
+    app_name: str
 
-    def __init__(self, db_id:int=0, ip:str="192.168.1.237", port:int=502, name:str="", test_port:int=0, messenger_queue:Queue[list[str, int, int, int]]=None,
-                 app_name:str="ElectricalSubstation_0",
-                 line_monitoring_queue=None,
-                 electrical_substation_queue=None):
+    def __init__(self, db_id: int = 0, ip: str = "192.168.1.237", port: int = 502, name: str = "", test_port: int = 0,
+                 messenger_queue: Queue[list[str, int, int, int]] = None,
+                 app_name: str = "ElectricalSubstation_0",
+                 line_monitoring_queue: Queue[list[int, int]] = None,
+                 electrical_substation_queue: Queue[
+                     list[tuple[int, int], dict[str, Union[int, float]]]] = None) -> None:
         from core.theme.pic import Pics
 
         self.DBid = db_id
@@ -326,30 +385,20 @@ class GateWay:
         self.DataCounter = 0
         self.DPS = 0
         self.RPS = 0
-        self.TimeDis = False
-        self.DiffTime = False
         self.read_data = False
 
-        if db_id:
-            self.update()
+        self.TimeDis = datetime.now()
+        self.DiffTime = relativedelta()
 
-        if self.app_name == "Mersad Monitoring System":
-            self.thread_func = self.line_monitoring_read_data_from_plc_thread
-        elif "ElectricalSubstation" in self.app_name:
-            s = self.app_name.split("_")
-            self.app_name = s[0]
-            self.electrical_substation_id = int(s[1])
-            self.electrical_devices = get_devices_by_substation_id(self.electrical_substation_id)
-            self.thread_func = self.electrical_substation_read_data_from_plc_thread
         if messenger_queue is not None:
             self.MessengerQ = messenger_queue
-        self.client = ModbusClient(host=self.IP, port=self.Port, auto_open=True, auto_close=False,
-                                   timeout=modbus_timeout, debug=False)
+
         self.line_monitoring_queue = line_monitoring_queue
         self.electrical_substation_queue = electrical_substation_queue
         self.stop_thread = False
-        self.ReadingDataThread = threading.Thread(target=self.thread_func,
-                                                  args=(lambda: self.stop_thread,))
+
+        if db_id:
+            self.update()
 
         # if self.DBid < 5 and UI is not None:
         #     self.PLC_Status_lbl = UI.PLC_Status_lbl[self.DBid - 1]
@@ -374,22 +423,34 @@ class GateWay:
         #     self.IP_LE = ""
         #     self.TestPort_LE = ""
 
-    def run_thread(self):
+    def run_thread(self) -> None:
         self.ReadingDataThread.start()
         Logging.da_log("Init PLC " + self.Name, "PLC " + self.Name + " start")
 
-    def update(self):
+    def update(self) -> None:
         sea = TinyDB(da_unit_db_path).table(da_unit_table_name).get(doc_id=self.DBid)
         self.Port = 502
         self.TestPort = sea["testPort"]
-        self.app = sea["app"]
+        self.app_name = sea["app"]
         self.IP = sea["IP"]
         self.Name = sea["label"]
+
+        if self.app_name == "Mersad Monitoring System":
+            self.thread_func = self.line_monitoring_read_data_from_plc_thread
+        elif "ElectricalSubstation" in self.app_name:
+            s = self.app_name.split("_")
+            self.app_name = s[0]
+            self.electrical_substation_id = int(s[1])
+            self.electrical_devices = get_devices_by_substation_id(self.electrical_substation_id)
+            self.thread_func = self.electrical_substation_read_data_from_plc_thread
 
         self.client = ModbusClient(host=self.IP, port=self.Port, auto_open=True, auto_close=False,
                                    timeout=modbus_timeout, debug=False)
 
-    def disconnect(self):
+        self.ReadingDataThread = threading.Thread(target=self.thread_func,
+                                                  args=(lambda: self.stop_thread,))
+
+    def disconnect(self) -> None:
         if self.first_bad:
             try:
                 winsound.Beep(5000, 100)
@@ -419,7 +480,7 @@ class GateWay:
             self.MessengerQ.put([PLCDisconnectBaleText.format(Name=self.Name, Time=now1), -1, -4, 2])
             Logging.da_log("Disconnected", "PLC " + self.Name + " Disconnected")
 
-    def connect(self):
+    def connect(self) -> None:
         if self.first_good:
 
             try:
@@ -449,7 +510,7 @@ class GateWay:
             self.first_good = False
             self.disc_msg_sent = False
 
-    def test(self, data:int)->None:
+    def test(self, data: int) -> None:
         """
         test DAUnits that is alive or not with make a port on and
         Args:
@@ -460,14 +521,14 @@ class GateWay:
             self.MessengerQ.put([VirtualText.format(Name=self.Name, format=self.TestPort, data=data), -2, -4, 2])
         # self.lbl_Test.setText(str(data))
 
-    def counter(self)->None:
+    def counter(self) -> None:
         data = int(self.client.read_holding_registers(register_for_counter, 1)[0])
         if data > 32767:
             data = data - 65536
         self.ret_num = data
         # self.PLC_Counter_lbl.setText(str(self.ret_num))
 
-    def cal_sleep_time(self)->None:
+    def cal_sleep_time(self) -> None:
         dps = self.DPS * 1.2
         if not (dps * 1.3 > self.RPS > dps):
             if dps >= self.RPS:
@@ -484,7 +545,7 @@ class GateWay:
             self.read_data = False
         self.SleepTime = round(self.SleepTime, 2)
 
-    def restart_thread(self)->None:
+    def restart_thread(self) -> None:
         if not (self.ReadingDataThread.is_alive()):
             self.stop_thread = False
             self.ReadingDataThread = threading.Thread(target=self.thread_func,
@@ -492,7 +553,7 @@ class GateWay:
             self.ReadingDataThread.start()
             Logging.da_log("Restart PLC " + self.Name, "PLC " + self.Name + " restart")
 
-    def line_monitoring_read_data_from_plc_thread(self, stop_thread: Callable[[], bool])->None:
+    def line_monitoring_read_data_from_plc_thread(self, stop_thread: Callable[[], bool]) -> None:
         sleep(1)
         now_sleep = datetime.now()
         while True:
@@ -562,7 +623,7 @@ class GateWay:
         else:
             return None, None
 
-    def electrical_substation_read_data_from_plc_thread(self, stop_thread: Callable[[], bool])->None:
+    def electrical_substation_read_data_from_plc_thread(self, stop_thread: Callable[[], bool]) -> None:
         sleep(1)
         now_sleep = datetime.now()
         while True:

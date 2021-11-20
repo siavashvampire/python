@@ -2,9 +2,14 @@ import json
 import threading
 from datetime import datetime
 from queue import Queue
+from threading import Thread
 from time import sleep
+from typing import Any
 
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QLabel
 from tinydb import TinyDB, table
+from tinydb.table import Table
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
 from core.RH.ResponseHandler import send_data_rh
@@ -16,6 +21,22 @@ from core.theme.pic import Pics
 
 
 class DataArchive:
+    state: bool
+    should_stop: bool
+    checkDBui: bool
+    stop_check: bool
+    DB: Table
+    insertFlag: bool
+    DBCheck: int
+    ArchiveQ: Queue[Any]
+    stop_thread: bool
+    Force2Send: bool
+    on: QPixmap
+    off: QPixmap
+    Thread: Thread
+    check_label: QLabel
+    thread_label: QLabel
+
     def __init__(self, check_label=None, thread_label=None):
         self.state = False
         self.should_stop = False
@@ -34,10 +55,10 @@ class DataArchive:
         self.Thread = threading.Thread(target=self.saving_data, args=(lambda: self.stop_thread,))
         self.check_label.setPixmap(self.off)
 
-    def run_thread(self):
+    def run_thread(self) -> None:
         self.Thread.start()
 
-    def saving_data(self, stop_thread):
+    def saving_data(self, stop_thread) -> None:
         now = datetime.now()
         sleep(1)
         while True:
@@ -50,16 +71,13 @@ class DataArchive:
             elif self.DBCheck == 0:
                 sleep_time = sleep_time_1
             try:
-                save_item = self.ArchiveQ.get(block=False)
+                save_item = self.ArchiveQ.get(timeout=1)
                 self.ArchiveQ.task_done()
                 self.save_data(save_item)
                 if queue_sender_max_wait:
                     if self.ArchiveQ.qsize() > queue_sender_max_wait:
                         now = datetime.now()
-            except Exception as e:
-                pass
-                if diff.seconds < sleep_time:
-                    sleep(1)
+            except:
                 if stop_thread():
                     break
             if diff.seconds > sleep_time or self.Force2Send:
@@ -81,10 +99,9 @@ class DataArchive:
                         if self.checkDBui:
                             self.checkDBui = False
                             self.check_label.setPixmap(self.off)
-
                 now = datetime.now()
 
-    def save_data(self, item):
+    def save_data(self, item) -> None:
         good = False
         while not good:
             try:
@@ -94,21 +111,21 @@ class DataArchive:
                 Logging.sender_log("insert data", str(e))
                 good = False
 
-    def get_save_data(self):
+    def get_save_data(self) -> list:
         if self.local_db_len():
             if send_list_flag:
                 return self.DB.all()[0:count_for_send_list]
             else:
-                return self.DB.all()[0]
+                return [self.DB.all()[0]]
         else:
-            return None
+            return []
 
-    def delete_data(self, id_del):
+    def delete_data(self, id_del: list[int]) -> None:
         self.DB.remove(doc_ids=id_del)
 
-    def import_db_check(self):
+    def import_db_check(self) -> bool:
         s = self.get_save_data()
-        if s is not None:
+        if len(s):
             send_flag, s_doc_id = self.send_data(s)
             if send_flag:
                 self.delete_data(s_doc_id)
@@ -116,57 +133,40 @@ class DataArchive:
         else:
             return False
 
-    def send_data(self, data):
-        if type(data) == list:
-            # TODO:aval check konim k age 1 dade bashe type mitone motefavet bashad ya na baad motmaen shim 1 dade ham dorost mifreste
+    def send_data(self, data: list[table.Document]) -> tuple[bool, list[int]]:
+        url = main_default_log_url
+        good = False
+        index = []
+        if self.check_db():
+            payload = json.dumps(data)
+            payload = "--" + boundary_for_payload + "\r\nContent-Disposition: form-data; name=\"DataArray\"\r\n\r\n" \
+                      + payload + "\r\n--" + boundary_for_payload + "--"
+            headers = {'cache-control': "no-cache",
+                       'content-type': "multipart/form-data; boundary=" + boundary_for_payload}
+            status, r = site_connection(url, send_timeout, data=payload, header=headers)
+            good, index, error = send_data_rh(r, status)
+            # self.insertFlag = RH(r, status)
 
-            url = main_default_log_url
-            good = False
-            index = 0
-            if self.check_db():
-                payload = json.dumps(data)
-                payload = "--" + boundary_for_payload + "\r\nContent-Disposition: form-data; name=\"DataArray\"\r\n\r\n" \
-                          + payload + "\r\n--" + boundary_for_payload + "--"
-                headers = {'cache-control': "no-cache",
-                           'content-type': "multipart/form-data; boundary=" + boundary_for_payload}
-                status, r = site_connection(url, send_timeout, data=payload, header=headers)
-                good, index, error = send_data_rh(r, status)
-                # self.insertFlag = RH(r, status)
+        s_doc_id = [data[i].doc_id for i in index]
+        return good, s_doc_id
 
-            s_doc_id = [data[i].doc_id for i in index]
-            return good, s_doc_id
-        if type(data) == table.Document:
-            payload = data
-
-            url = main_default_log_url
-
-            good = False
-            status_code = 0
-            r = ""
-            if self.check_db():
-                status, r = site_connection(url, send_timeout, data=payload)
-                good, index, error = send_data_rh(r, status)
-            if not (status_code in [200, 204, 205]):
-                Logging.sender_log("Sender", "status code : " + str(status_code) + " , " + str(r))
-            return good, [data.doc_id]
-
-    def local_db_len(self):
+    def local_db_len(self) -> int:
         len_db = len(self.DB)
         if not len_db:
             self.DB = TinyDB(log_db_path).table(sender_table_name)
         return len_db
 
     @staticmethod
-    def check_db():
+    def check_db() -> bool:
         return get_from_site_db(main_get_check_url, check_timeout)[0]
 
-    def restart_thread(self):
+    def restart_thread(self) -> None:
         if not (self.Thread.is_alive()):
             self.stop_thread = False
             self.Thread = threading.Thread(target=self.saving_data, args=(lambda: self.stop_thread,))
             self.Thread.start()
 
-    def state_thread(self, state=False, program=False):
+    def state_thread(self, state=False, program=False) -> None:
         if program is False:
             if self.state:
                 self.should_stop = True
@@ -183,21 +183,22 @@ class DataArchive:
             if state is False:
                 self.stop_func()
 
-    def stop_func(self):
+    def stop_func(self) -> None:
         self.stop_thread = True
         self.Thread.join()
         self.stop_check = True
         self.state = False
         self.thread_label.setIcon(Pics.OFF)
 
-    def start_func(self):
+    def start_func(self) -> None:
         self.stop_thread = False
         self.restart_thread()
         self.stop_check = False
         self.state = True
+        self.DBCheck = 2
         self.thread_label.setIcon(Pics.ON)
 
-    def check(self):
+    def check(self) -> None:
         if not (self.Thread.is_alive()):
             if self.state:
                 self.thread_label.setIcon(Pics.OFF)
@@ -213,5 +214,5 @@ class DataArchive:
             self.checkDBui = False
             self.check_label.setPixmap(Pics.MinusMark)
 
-    def force_check_db(self):
+    def force_check_db(self) -> None:
         self.Force2Send = True

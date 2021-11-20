@@ -1,15 +1,24 @@
+from queue import Queue
+
 from app.shift.cronjob.cronjob import Cronjob
 
 
 class Shift:
-    def __init__(self, sender_state_func):
+    state: bool
+    stop_check: bool
+    should_stop: bool
+    update_shift: Cronjob
+    messenger_queue: Queue[list[str, int, int, int]]
+
+    def __init__(self, sender_state_func, messenger_queue: Queue[list[str, int, int, int]]) -> None:
         self.state = False
         self.stop_check = False
         self.should_stop = False
+        self.messenger_queue = messenger_queue
 
-        self.update_shift = Cronjob(sender_state_func=sender_state_func)
+        self.update_shift = Cronjob(sender_state_func=sender_state_func, messenger_queue=self.messenger_queue)
 
-    def state_thread(self, state=False, program=False):
+    def state_thread(self, state: bool = False, program: bool = False) -> None:
         if program is False:
             if self.state:
                 self.should_stop = True
@@ -28,6 +37,7 @@ class Shift:
         self.update_shift.stop_thread = True
         self.stop_check = True
         self.state = False
+        self.update_shift.Thread.join()
 
     def start_func(self):
         self.update_shift.stop_thread = False

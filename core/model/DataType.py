@@ -10,7 +10,7 @@ sensor_new_log_data = {"Sensor_id": None, "AbsTime": None, "counter": None, "Til
                        "start_time": None}
 sensor_new_log_app = 'LineMonitoring'
 sensor_new_log_class = 'line_monitoring'
-sensor_new_log_method = 'new_log'
+sensor_new_log_method = 'newLog'
 
 sensor_activity_data = {"Sensor_id": None, "active": None, "Tile_Kind": None, "time": None}
 sensor_activity_app = 'LineMonitoring'

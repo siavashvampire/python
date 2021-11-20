@@ -1,4 +1,5 @@
 import json
+from typing import Union
 
 import requests
 
@@ -7,7 +8,8 @@ from app.LineMonitoring.app_provider.api.ReadText import FailedText
 from core.RH.ResponseHandler import get_rh
 
 
-def get_from_site_db(get_url, get_timeout, db_path='', table_name=''):
+def get_from_site_db(get_url: str, get_timeout: int, db_path: str = '', table_name: str = '') \
+        -> tuple[bool, Union[bool, str]]:
     status_code = 0
     status = False
     try:
@@ -48,7 +50,7 @@ def get_from_site_db(get_url, get_timeout, db_path='', table_name=''):
     return status, r
 
 
-def site_connection(url, timeout, data=None, header=None, params=None):
+def site_connection(url: str, timeout: int, data=None, header=None, params=None) -> tuple[bool, str]:
     try:
         if params is None:
             response = requests.post(url, data=data, headers=header, timeout=timeout)
@@ -77,9 +79,9 @@ def site_connection(url, timeout, data=None, header=None, params=None):
             else:
                 return True, r
         elif status_code == 204:
-            return True, False
+            return True, "False"
         elif status_code == 205:
-            return True, True
+            return True, "True"
         elif status_code == 404:
             r = "Non Existing URL Path"
         elif status_code == 400:

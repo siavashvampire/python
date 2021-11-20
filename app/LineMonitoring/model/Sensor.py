@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from PyQt5.QtWidgets import QLabel
 from tinydb import TinyDB, Query
 
 import app.LineMonitoring.app_provider.api.LastLog as LastLog
@@ -37,7 +38,7 @@ class Sensor:
         self.data_activity_type = sensor_activity_data
 
         if self.sensor_id:
-            self.update(self.sensor_id)
+            self.update()
 
         if self.doc_id < 9 and self.doc_id and ui is not None:
             self.lbl_Data_Name = ui.lbl_Data_Name[self.doc_id - 1]
@@ -53,9 +54,9 @@ class Sensor:
             if self.OffTime == 0:
                 self.lbl_Data_Status.setPixmap(Pics.MinusMark)
         else:
-            self.lbl_Data_Name = ""
-            self.lbl_Data = ""
-            self.lbl_Status = ""
+            self.lbl_Data_Name = QLabel()
+            self.lbl_Data = QLabel()
+            self.lbl_Status = QLabel()
 
     def send(self, value):
         bale_report_flag = False
@@ -83,33 +84,33 @@ class Sensor:
             self.lbl_Data.setText(str(value))
         return bale_report_flag, sms_report_flag
 
-    def update(self, sensor_id=0):
-        if sensor_id == 0:
-            sensor_id = self.sensor_id
+    def update(self):
+        sensor_id = self.sensor_id
         prop = Query()
         sensor_db = TinyDB(sensor_db_path).table(sensor_table_name)
         sea = sensor_db.search(prop.id == sensor_id)
-        sea = sea[0]
-        self.PLC_id = int(sea["PLC_id"])
-        self.counter = sea["tile_Count"]
-        self.Tile_Kind = sea["tile_id"]
-        self.label = sea["label"]
-        self.OffTime = sea["OffTime"]
-        self.OffTime_Bale = sea["OffTime_Bale"]
-        self.OffTime_SMS = sea["OffTime_SMS"]
-        self.Motor_Speed = 100
-        self.Active = sea["Active"]
-        self.Active_Bale = self.Active
-        self.Active_SMS = self.Active
-        self.phaseLabel = sea["phaseLabel"]
-        self.phase = sea["phase"]
-        self.unit = sea["unit"]
-        self.doc_id = sea.doc_id
-        last_time = LastLog.get(self.sensor_id)
-        if last_time is not None:
-            self.LastLog = datetime.strptime(last_time, time_format)
-        else:
-            self.LastLog = None
+        if sea:
+            sea = sea[0]
+            self.PLC_id = int(sea["PLC_id"])
+            self.counter = sea["tile_Count"]
+            self.Tile_Kind = sea["tile_id"]
+            self.label = sea["label"]
+            self.OffTime = sea["OffTime"]
+            self.OffTime_Bale = sea["OffTime_Bale"]
+            self.OffTime_SMS = sea["OffTime_SMS"]
+            self.Motor_Speed = 100
+            self.Active = sea["Active"]
+            self.Active_Bale = self.Active
+            self.Active_SMS = self.Active
+            self.phaseLabel = sea["phaseLabel"]
+            self.phase = sea["phase"]
+            self.unit = sea["unit"]
+            self.doc_id = sea.doc_id
+            last_time = LastLog.get(self.sensor_id)
+            if last_time is not None:
+                self.LastLog = datetime.strptime(last_time, time_format)
+            else:
+                self.LastLog = None
 
     def send_activity(self, value, time=None):
         self.SenderQ.put(

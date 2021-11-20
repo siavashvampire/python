@@ -1,12 +1,19 @@
 from queue import Queue
 from threading import Thread
+from typing import Union
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
-from app.ElectricalSubstation.model.Device import find_device
+from app.ElectricalSubstation.model.Device import find_device, Device
 
 
 class RenderingDataThread:
-    def __init__(self, devices, messenger_queue=None, ui=None):
+    devices: list[Device]
+    messenger_queue: Queue[list[str, int, int, int]]
+    DataQ: Queue[list[tuple[int, int], dict[str, Union[int, float]]]]
+    stop_thread: bool
+    Thread: Thread
+
+    def __init__(self, devices: list[Device], messenger_queue: Queue[list[str, int, int, int]] = None, ui=None):
         self.ui = ui
         self.devices = devices
         self.messenger_queue = messenger_queue
@@ -18,7 +25,7 @@ class RenderingDataThread:
 
     def rendering_data(self, stop_thread):
         while True:
-            choose, data = self.DataQ.get()
+            [choose, data] = self.DataQ.get()
             # print(data)
             self.DataQ.task_done()
 

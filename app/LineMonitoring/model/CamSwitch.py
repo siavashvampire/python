@@ -21,7 +21,7 @@ class CamSwitch:
         self.unit = unit_id
         self.data_type = switch_activity_data
         if self.Switch_id:
-            self.update(self.Switch_id)
+            self.update()
 
     def send(self, value):
         bale_report_flag = False
@@ -39,20 +39,20 @@ class CamSwitch:
         self.Active = value
         return bale_report_flag, sms_report_flag
 
-    def update(self, switch_id=0):
-        if switch_id == 0:
-            switch_id = self.Switch_id
+    def update(self):
+        switch_id = self.Switch_id
         prop = Query()
         switch_db = TinyDB(switch_db_path).table(switch_table_name)
         sea = switch_db.search(prop.id == switch_id)
-        sea = sea[0]
-        self.PLC_id = int(sea["PLC_id"])
-        self.label = sea["label"]
-        self.Active = sea["Active"]
-        self.phase = sea["phase"]
-        self.phaseLabel = sea["phaseLabel"]
-        self.unit = sea["unit"]
-        self.doc_id = sea.doc_id
+        if sea:
+            sea = sea[0]
+            self.PLC_id = int(sea["PLC_id"])
+            self.label = sea["label"]
+            self.Active = sea["Active"]
+            self.phase = sea["phase"]
+            self.phaseLabel = sea["phaseLabel"]
+            self.unit = sea["unit"]
+            self.doc_id = sea.doc_id
 
     def get_data(self, value, time):
         data_temp = dict(self.data_type)

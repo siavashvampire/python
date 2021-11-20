@@ -11,9 +11,15 @@ from core.config.Config import off_cam_switch_value, on_cam_switch_value
 
 
 class RenderingDataThread:
+    switch: list[CamSwitch]
+    sensor: list[Sensor]
+    messenger_queue: Queue[list[str, int, int, int]]
+    DataQ: Queue[list[int, int]]
+    stop_thread: bool
+    Thread: Thread
+
     def __init__(self, sensor: list[Sensor], switch: list[CamSwitch],
                  messenger_queue: Queue[list[str, int, int, int]] = None, ui=None) -> None:
-
         self.ui = ui
         self.switch = switch
         self.sensor = sensor

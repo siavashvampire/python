@@ -31,6 +31,7 @@ help_pdf_timeout = int(sAll["help_pdf_timeout"])
 time_format = sAll["time_format"]
 send_time_format = sAll["send_time_format"]
 day_time_format = sAll["day_time_format"]
+adminUnit = int(sAll["adminUnit"])
 # end  format Config
 
 # Start  PLC Config

@@ -4,19 +4,19 @@ from persiantools.jdatetime import JalaliDateTime
 
 from app.LineMonitoring.app_provider.api.ReadText import FailedText
 from core.app_provider.api.get import site_connection, get_from_site_db
-from core.config.Config import main_get_is_day_update_url, cronjob_timeout, main_get_admin_day_url, time_format, day_time_format
+from core.config.Config import main_get_is_day_update_url, cronjob_timeout, main_get_admin_day_url, time_format, \
+    day_time_format
 
 
-def isDayUpdated():
+def isDayUpdated() -> str:
     get = get_from_site_db(main_get_is_day_update_url, cronjob_timeout)
     status = get[0]
     if status:
         return get[1]
     else:
-        return False
+        return ""
 
-
-def adminDayCounter():
+def adminDayCounter() -> str:
     headers = {
         'content-type': "application/x-www-form-urlencoded",
         'cache-control': "no-cache",

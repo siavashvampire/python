@@ -13,6 +13,7 @@ from app.DBSender.app_provider.admin.main import DataArchive
 from app.LineMonitoring.app_provider.admin.main import LineMonitoring
 from app.ElectricalSubstation.app_provider.admin.main import ElectricalSubstation
 from app.backup.app_provider.admin.main import BackupMain
+from app.shift.app_provider.admin.main import Shift
 from core.config.Config import db_path, logout_time
 from core.model.Login import LoginUI
 from core.model.MainUI import MainUi
@@ -69,6 +70,10 @@ class Main:
         self.bale_org = BaleMain(sender_queue=self.sender_thread.ArchiveQ,
                                  bale_status_label=self.main_ui.BaleStatus_label,
                                  thread_label=self.main_ui.Threads.ThS_Bale)
+
+        self.start_splash.show_message("starting shift system")
+        self.shift = Shift(sender_state_func=self.sender_thread.state_thread,
+                           messenger_queue=self.bale_org.TextQ)
 
         self.start_splash.show_message("creating backup system")
         self.backup_thread = BackupMain(ui=self.main_ui)
@@ -184,6 +189,10 @@ class Main:
         self.close_splash.show_message("closing Bale system")
         self.bale_org.state_thread(state=False, program=True)
         self.close_splash.add_saved_text("Bale system closed!")
+
+        self.close_splash.show_message("closing shift system")
+        self.shift.state_thread(state=False, program=True)
+        self.close_splash.add_saved_text("shift system closed!")
 
         self.close_splash.show_message("closing DA units system")
         self.da_units.state_thread(state=False, program=True)

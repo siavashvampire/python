@@ -1,3 +1,4 @@
+from queue import Queue
 from time import sleep
 from datetime import datetime
 from threading import Thread
@@ -5,11 +6,17 @@ from threading import Thread
 import app.Logging.app_provider.admin.MersadLogging as Logging
 from app.shift.model.Day import isDayUpdated, adminDayCounter
 from core.app_provider.api.get import site_connection
-from core.config.Config import main_cronjob_update_shift_url, cronjob_timeout, main_cronjob_update_day_url, shift_check_time
+from core.config.Config import main_cronjob_update_shift_url, cronjob_timeout, main_cronjob_update_day_url, \
+    shift_check_time, adminUnit
 
 
 class Cronjob:
-    def __init__(self, messenger_queue, sender_state_func):
+    Thread: Thread
+    stop_thread: bool
+    last_check: datetime
+    messenger_queue: Queue[list[str, int, int, int]]
+
+    def __init__(self, messenger_queue: Queue[list[str, int, int, int]], sender_state_func) -> None:
         self.messenger_queue = messenger_queue
         self.last_check = datetime.now()
         self.sender_state_func = sender_state_func
@@ -28,8 +35,8 @@ class Cronjob:
 
                     if isDayUpdated():
                         day_count = adminDayCounter()
-                        self.messenger_queue.TextQ.put([day_count, -3, -4, 1])
-                        self.messenger_queue.TextQ.put([day_count, -3, -4, 2])
+                        self.messenger_queue.put([day_count, adminUnit, -4, 1])
+                        self.messenger_queue.put([day_count, adminUnit, -4, 2])
                     self.sender_state_func(state=True, program=True)
                     self.last_check = datetime.now()
             except Exception as e:
