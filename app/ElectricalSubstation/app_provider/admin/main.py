@@ -1,23 +1,27 @@
-from datetime import datetime, timedelta
+from time import sleep
 from queue import Queue
 from threading import Thread
-from typing import List, Any
+from typing import Union, Callable
 
-from persiantools.jdatetime import JalaliDateTime
+from PyQt5.QtWidgets import QLabel
 from tinydb import TinyDB, Query
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
 from app.ElectricalSubstation.model.Device import Device
 from app.ElectricalSubstation.render.render import RenderingDataThread
 from core.app_provider.api.get import get_from_site_db
-from core.config.Config import main_get_sensor_url, sensor_get_timeout, sensor_db_path, sensor_on_off_time, time_format, \
-    sensor_table_name, switch_table_name, device_db_path, device_table_name, main_get_device_url, device_get_timeout
-from core.config.Config import main_get_switch_url, switch_get_timeout, switch_db_path
-from core.config.Config import time_delay_main_loop
+from core.config.Config import device_db_path, device_table_name, main_get_device_url, device_get_timeout
 from core.theme.pic import Pics
 
 
 class ElectricalSubstation:
+    state: bool
+    stop_check: bool
+    should_stop: bool
+    thread_label: QLabel
+    stop_thread: bool
+    Thread: Thread
+    RDThread: RenderingDataThread
     devices: list[Device]
 
     def __init__(self, messenger_queue, sender_queue, sender_state_func, thread_label, ui):
@@ -26,7 +30,6 @@ class ElectricalSubstation:
         self.stop_check = False
         self.should_stop = False
         self.thread_label = thread_label
-        self.DataQ = Queue()
         # self.messenger_queue = messenger_queue
 
         # self.mergeData = Cronjob(sender_state_func=sender_state_func)
@@ -39,50 +42,12 @@ class ElectricalSubstation:
         self.RDThread = RenderingDataThread(devices=self.devices,
                                             ui=self.ui)
 
-    def electrical_substation(self, stop_thread):
-        now = datetime.now()
+    def electrical_substation(self, stop_thread: Callable[[], bool]):
         while True:
-            try:
-                data = self.DataQ.get(timeout=5)
-                self.DataQ.task_done()
-
-                if data:
-                    self.RDThread.DataQ.put(data)
-                else:
-                    if stop_thread():
-                        Logging.line_monitoring_log("Main Rendering Thread", "Stop")
-                        break
-            except:
-                pass
-            # if (datetime.now() - now).seconds > sensor_on_off_time:
-            #     now = datetime.now()
-            #     for s in self.sensors:
-            #         if s.OffTime:
-            #             ll_temp = s.LastLog
-            #             if not ll_temp == None:
-            #                 diff = (now + timedelta(seconds=time_delay_main_loop)) - ll_temp
-            #                 now_te = JalaliDateTime.to_jalali(ll_temp)
-            #                 if s.Active:
-            #                     if diff.days or (diff.seconds > (s.OffTime * 60 + time_delay_main_loop)):
-            #                         s.send_activity(False, ll_temp.strftime(time_format))
-            #
-            #                 if s.OffTime_Bale:
-            #                     if s.Active_Bale:
-            #                         if diff.days or diff.seconds > s.OffTime_Bale * 60:
-            #                             s.Active_Bale = False
-            #                             if self.ui.Setting.baleONOFFSendFlag.isChecked():
-            #                                 if self.ui.Setting.baleONOFFFlag.isChecked():
-            #                                     print("off Sensor {} send".format(s.sensor_id))
-            #                                 off_sensor_bale_text = str(s.label) + " فاز " + str(s.phaseLabel) + str(
-            #                                     now_te.strftime(' در %y/%m/%d ساعت %H:%M:%S')) + " خاموش شده است"
-            #                                 self.messenger_queue.put([off_sensor_bale_text, s.unit, s.phase, 1])
-            #                 if s.OffTime_SMS:
-            #                     if s.Active_SMS:
-            #                         if diff.days or diff.seconds > s.OffTime_SMS * 60:
-            #                             s.Active_SMS = False
-            #                             off_sensor_sms_text = str(s.label) + " فاز " + str(s.phaseLabel) + str(
-            #                                 now_te.strftime(' در %y/%m/%d ساعت %H:%M:%S')) + " خاموش شده است"
-            #                             self.messenger_queue.put([off_sensor_sms_text, s.unit, s.phase, 2])
+            sleep(5)
+            if stop_thread():
+                Logging.line_monitoring_log("Main Rendering Thread", "Stop")
+                break
 
     def restart_thread(self):
         if not (self.Thread.is_alive()):
@@ -150,10 +115,9 @@ class ElectricalSubstation:
 
     def stop_func(self):
         self.stop_thread = True
-        self.DataQ.put(0)
         self.Thread.join()
         self.RDThread.stop_thread = True
-        self.RDThread.DataQ.put([0, None])
+        self.RDThread.DataQ.put([(0, 0), {"substation_id": 0}])
         self.RDThread.Thread.join()
         self.stop_check = True
         self.state = False
@@ -167,7 +131,7 @@ class ElectricalSubstation:
         self.state = True
         self.thread_label.setIcon(Pics.ON)
 
-    def update_system(self, where_should_update=None):
+    def update_system(self, where_should_update: tuple[str] = ()) -> None:
         self.read_all_device_data()
         self.create_devices()
 

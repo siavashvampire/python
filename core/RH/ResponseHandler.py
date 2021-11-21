@@ -93,9 +93,11 @@ def GetActivityeHandler(r, status):
 def send_data_rh(r, status):
     error = []
     good = False
+    should_update = False
     index = []
     if status is True:
         good = True
+        should_update = r["need_update"]
         result = r["result"]
         temp_index = 0
         for i in result:
@@ -107,7 +109,6 @@ def send_data_rh(r, status):
             temp_index += 1
 
     else:
-        print(r)
         index = []
         error = []
-    return good, index, error
+    return good, index, error, should_update

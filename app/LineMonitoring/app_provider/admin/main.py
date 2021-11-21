@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from queue import Queue
 from threading import Thread
 from time import sleep
+from typing import Callable
 
 from PyQt5.QtWidgets import QLabel
 from persiantools.jdatetime import JalaliDateTime
@@ -34,7 +35,7 @@ class LineMonitoring:
     RDThread: RenderingDataThread
 
     def __init__(self, messenger_queue: Queue[list[str, int, int, int]], sender_queue, sender_state_func,
-                 thread_label: QLabel, ui):
+                 thread_label: QLabel, ui) -> None:
         self.ui = ui
         self.state = False
         self.stop_check = False
@@ -57,7 +58,7 @@ class LineMonitoring:
                                             messenger_queue=self.messenger_queue,
                                             ui=self.ui)
 
-    def line_monitoring(self, stop_thread):
+    def line_monitoring(self, stop_thread: Callable[[], bool]) -> None:
         now = datetime.now()
         while True:
             sleep(5)
@@ -95,7 +96,7 @@ class LineMonitoring:
                 Logging.line_monitoring_log("Main Rendering Thread", "Stop")
                 break
 
-    def restart_thread(self):
+    def restart_thread(self) -> None:
         if not (self.Thread.is_alive()):
             self.stop_thread = False
             self.Thread = Thread(target=self.line_monitoring, args=(lambda: self.stop_thread,))
@@ -105,7 +106,7 @@ class LineMonitoring:
             self.RDThread.stop_thread = False
             self.RDThread.restart_thread()
 
-    def create_sensors(self):
+    def create_sensors(self) -> None:
         sensor_db = TinyDB(sensor_db_path).table(sensor_table_name)
         switch_db = TinyDB(switch_db_path).table(switch_table_name)
         # TODO:check konim bebinim hatman age data base haw khali bashi chi mishe error mdie ya na
@@ -116,19 +117,19 @@ class LineMonitoring:
 
         self.sensors = [Sensor(sensor_id=int(i["id"]), ui=self.ui, sender_queue=self.ArchiveQ) for i in r]
 
-    def db_update_all(self):
+    def db_update_all(self) -> None:
         self.read_all_sensor_data()
         self.read_all_switch_data()
 
     @staticmethod
-    def read_all_switch_data():
+    def read_all_switch_data() -> None:
         get_from_site_db(main_get_switch_url, switch_get_timeout, switch_db_path, switch_table_name)
 
     @staticmethod
-    def read_all_sensor_data():
+    def read_all_sensor_data() -> None:
         get_from_site_db(main_get_sensor_url, sensor_get_timeout, sensor_db_path, sensor_table_name)
 
-    def check(self):
+    def check(self) -> None:
         if not (self.RDThread.Thread.is_alive()):
             if self.state:
                 self.thread_label.setIcon(Pics.OFF)
@@ -152,7 +153,7 @@ class LineMonitoring:
                 self.thread_label.setIcon(Pics.ON)
                 self.state = True
 
-    def state_thread(self, state=False, program=False):
+    def state_thread(self, state: bool = False, program: bool = False) -> None:
         if program is False:
             if self.state:
                 self.should_stop = True
@@ -167,7 +168,7 @@ class LineMonitoring:
             if state is False:
                 self.stop_func()
 
-    def stop_func(self):
+    def stop_func(self) -> None:
         self.stop_thread = True
         self.Thread.join()
         self.RDThread.stop_thread = True
@@ -177,7 +178,7 @@ class LineMonitoring:
         self.state = False
         self.thread_label.setIcon(Pics.OFF)
 
-    def start_func(self):
+    def start_func(self) -> None:
         self.stop_thread = False
         self.RDThread.stop_thread = False
         self.restart_thread()
@@ -185,7 +186,7 @@ class LineMonitoring:
         self.state = True
         self.thread_label.setIcon(Pics.ON)
 
-    def update_system(self, where_should_update=("sensor_update", "switch_update")):
+    def update_system(self, where_should_update: tuple[str] = ("sensor_update", "switch_update")) -> None:
         if "sensor_update" in where_should_update:
             self.read_all_switch_data()
         if "switch_update" in where_should_update:

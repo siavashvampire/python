@@ -104,6 +104,7 @@ class Main:
                                                   da_units_update_func=self.da_units.update_system)
 
         self.update_controller.update_queue.put(True)
+        self.sender_thread.update_queue = self.update_controller.update_queue
 
         self.main_ui.Backup_Submit_pb.clicked.connect(self.backup_thread.update_app)
         self.main_ui.Sensor_Status.Sensor_Submit_pb.clicked.connect(self.line_monitoring.create_sensors)

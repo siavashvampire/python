@@ -134,9 +134,9 @@ backup_time = 30
 sensor_on_off_time = 10
 merge_check_time = 30
 merge_time = 12
-update_time = 20
+update_time = 20*60
 update_system_timeout = 20
-update_system_sleep_time = 20
+update_system_sleep_time = 2*60
 
 config_db.update({"logout_time": str(logout_time)})
 config_db.update({"backup_time": str(backup_time)})

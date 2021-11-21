@@ -21,6 +21,7 @@ from core.theme.pic import Pics
 
 
 class DataArchive:
+    update_queue: Queue[bool]
     state: bool
     should_stop: bool
     checkDBui: bool
@@ -54,6 +55,7 @@ class DataArchive:
         self.off = Pics.deleteMark
         self.Thread = threading.Thread(target=self.saving_data, args=(lambda: self.stop_thread,))
         self.check_label.setPixmap(self.off)
+        self.update_queue = Queue()
 
     def run_thread(self) -> None:
         self.Thread.start()
@@ -126,16 +128,19 @@ class DataArchive:
     def import_db_check(self) -> bool:
         s = self.get_save_data()
         if len(s):
-            send_flag, s_doc_id = self.send_data(s)
+            send_flag, should_update, s_doc_id = self.send_data(s)
             if send_flag:
                 self.delete_data(s_doc_id)
+            if should_update:
+                self.update_queue.put(should_update)
             return send_flag
         else:
             return False
 
-    def send_data(self, data: list[table.Document]) -> tuple[bool, list[int]]:
+    def send_data(self, data: list[table.Document]) -> tuple[bool, bool, list[int]]:
         url = main_default_log_url
         good = False
+        should_update = False
         index = []
         if self.check_db():
             payload = json.dumps(data)
@@ -144,11 +149,11 @@ class DataArchive:
             headers = {'cache-control': "no-cache",
                        'content-type': "multipart/form-data; boundary=" + boundary_for_payload}
             status, r = site_connection(url, send_timeout, data=payload, header=headers)
-            good, index, error = send_data_rh(r, status)
+            good, index, error, should_update = send_data_rh(r, status)
             # self.insertFlag = RH(r, status)
 
         s_doc_id = [data[i].doc_id for i in index]
-        return good, s_doc_id
+        return good, should_update, s_doc_id
 
     def local_db_len(self) -> int:
         len_db = len(self.DB)

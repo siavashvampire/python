@@ -136,6 +136,6 @@ class DAUnits:
         get_from_site_db(get_url=main_get_da_unit_url, get_timeout=da_units_get_timeout, db_path=da_unit_db_path,
                          table_name=da_unit_table_name)
 
-    def update_system(self):
+    def update_system(self, where_should_update: tuple[str] = ())->None:
         self.read_all_units()
         self.create_units()

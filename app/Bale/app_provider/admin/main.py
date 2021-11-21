@@ -663,6 +663,6 @@ class BaleMain:
         self.read_all_phone()
         self.read_all_sms_phone()
 
-    def update_system(self) -> None:
+    def update_system(self, where_should_update: tuple[str] = ()) -> None:
         self.db_update_all()
         self.create_phones()

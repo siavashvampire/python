@@ -1,13 +1,20 @@
 from datetime import datetime
 from queue import Queue
 from threading import Thread
+from typing import Callable
 
 from core.app_provider.api.get import get_from_site_db
 from core.config.Config import update_time, main_update_system_url, update_system_timeout, update_system_sleep_time
 
 
 class UpdateController:
-    def __init__(self, line_monitoring_update_func, electrical_update_func, bale_org_update_func, da_units_update_func):
+    update_queue: Queue[bool]
+    checkForUpdate: Thread
+
+    def __init__(self, line_monitoring_update_func: Callable[[tuple[str]], None],
+                 electrical_update_func: Callable[[], None],
+                 bale_org_update_func: Callable[[], None],
+                 da_units_update_func: Callable[[], None]) -> None:
         self.Flag_Bale = False
         self.should_stop = False
         self.state = False
@@ -67,4 +74,3 @@ class UpdateController:
         if app_order[3] in keys and r[app_order[3]] is not None:
             print("DAUnits")
             self.da_units_update_func()
-

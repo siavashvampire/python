@@ -440,7 +440,7 @@ class Device:
                 return 0
 
 
-def find_device(choose: list[int], devices: list[Device]) -> Device:
+def find_device(choose: tuple[int], devices: list[Device]) -> Device:
     substation = choose[0]
     unit = choose[1]
     for this_device in devices:

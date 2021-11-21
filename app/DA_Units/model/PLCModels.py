@@ -664,12 +664,11 @@ class GateWay:
                             i.last_read_time_from_device = datetime.now()
 
                             if data["substation_id"] != 0:
-                                if data:
-                                    self.DataCounter += 1
-                                    self.read_data = True
-                                    self.cal_sleep_time()
-                                    choose = electrical_extract_choose(data)
-                                    self.electrical_substation_queue.put([choose, data])
+                                self.DataCounter += 1
+                                self.read_data = True
+                                self.cal_sleep_time()
+                                choose = electrical_extract_choose(data)
+                                self.electrical_substation_queue.put([choose, data])
                             else:
                                 pass
                                 # TODO: vaghti k none has gozaresh bede to log
