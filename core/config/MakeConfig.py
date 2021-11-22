@@ -100,7 +100,7 @@ cronjob_timeout = 500
 shift_cache_time = 30
 
 if developer:
-    shift_check_time = 10
+    shift_check_time = 120
 else:
     shift_check_time = 20 * 60
 

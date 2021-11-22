@@ -9,8 +9,7 @@ from typing import Callable, Union
 from PyQt5.QtGui import QPixmap
 from dateutil.relativedelta import relativedelta
 from persiantools.jdatetime import JalaliDateTime
-from pyModbusTCP import utils
-from pyModbusTCP.client import ModbusClient
+from app.DA_Units.model.client import MersadModbusClient
 from tinydb import TinyDB
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
@@ -19,10 +18,10 @@ from app.ElectricalSubstation.model.Device import Device
 from app.LineMonitoring.app_provider.api.LastLog import getABSecond, getText
 from app.LineMonitoring.app_provider.api.ReadText import PLCConnectBaleText, PLCDisconnectBaleText, VirtualText
 from core.config.Config import da_unit_db_path, modbus_timeout, plc_time_sleep_max, plc_time_sleep_min, \
-    plc_refresh_time, \
-    plc_sleep_time_step_up, plc_sleep_time_step_down, disconnect_alarm_time, send_time_format, da_unit_table_name, \
-    time_between_read_from_each_device
-from core.config.Config import register_for_data, register_for_counter, register_for_start_read, register_for_end_read
+    plc_refresh_time, plc_sleep_time_step_up, plc_sleep_time_step_down, disconnect_alarm_time, send_time_format, \
+    da_unit_table_name, time_between_read_from_each_device
+from core.config.Config import register_for_data, register_for_counter, register_for_start_read, \
+    register_for_end_read, register_for_test
 
 
 def clear_plc_ui(ui) -> None:
@@ -78,7 +77,7 @@ class Delta12SE:
     app_name: str
     IP: str
     Name: str
-    client: ModbusClient
+    client: MersadModbusClient
 
     def __init__(self, db_id: int = 0, ip: str = "192.168.1.240", port: int = 502, name: str = "", test_port: int = 0,
                  messenger_queue: Queue[list[str, int, int, int]] = None,
@@ -152,8 +151,12 @@ class Delta12SE:
         self.IP = sea["IP"]
         self.Name = sea["label"]
 
-        self.client = ModbusClient(host=self.IP, port=self.Port, auto_open=True, auto_close=False,
-                                   timeout=modbus_timeout, debug=False)
+        self.client = MersadModbusClient(host=self.IP, port=self.Port, auto_open=True, auto_close=False,
+                                         timeout=modbus_timeout, debug=False,
+                                         register_for_counter=register_for_counter,
+                                         register_for_data=register_for_data,
+                                         register_for_start_read=register_for_start_read,
+                                         register_for_end_read=register_for_end_read)
 
         if self.app_name == "LineMonitoring":
             self.thread_func = self.line_monitoring_read_data_from_plc_thread
@@ -229,12 +232,8 @@ class Delta12SE:
             self.MessengerQ.put([VirtualText.format(Name=self.Name, format=self.TestPort, data=data), -2, -4, 2])
         # self.lbl_Test.setText(str(data))
 
-    def counter(self):
-        data = int(self.client.read_holding_registers(register_for_counter, 1)[0])
-        if data > 32767:
-            data = data - 65536
-        self.ret_num = data
-        # self.PLC_Counter_lbl.setText(str(self.ret_num))
+    def counter(self) -> int:
+        return self.client.counter()
 
     def cal_sleep_time(self):
         dps = self.DPS * 1.2
@@ -273,7 +272,8 @@ class Delta12SE:
                     self.ReadCounter = 0
                     self.DataCounter = 0
                     self.ret_num += 1
-                    print("PLC " + str(self.Name) + " disconnected! | retry number : " + str(self.ret_num))
+                    print("PLC {name} disconnected! | retry number : {num}".format(name=self.Name,
+                                                                                   num=self.ret_num))
                     self.disconnect()
 
                 if plc_is_open:
@@ -295,9 +295,9 @@ class Delta12SE:
 
                     self.connect()
                     # if self.checkBox_Test.isChecked():
-                    #     self.client.write_single_coil(RegisterForTest, 1)
+                    #     self.client.test(True)
                     # else:
-                    #     self.client.write_single_coil(RegisterForTest, 0)
+                    #     self.client.test(False)
                     #
                     # if self.checkBox_Counter.isChecked():
                     #     self.SleepTime = 0
@@ -310,21 +310,16 @@ class Delta12SE:
                 break
 
     def line_monitoring_read_data_from_plc(self):
-        self.client.write_single_coil(register_for_start_read, True)
-        data = self.client.read_holding_registers(register_for_data, 1)
-        self.client.write_single_coil(register_for_end_read, True)
-        if data is not None:
-            data = int(data[0])
-            if data:
-                choose, data = extract_choose(data)
-                if choose == int(self.TestPort):
-                    self.test(data)
-                    return 0, None
-                return data, choose
-            else:
+        # Todo:in doros nashode bayad doros she az nazar annotation
+        data = self.client.safe_read_data()
+        if data:
+            choose, data = extract_choose(data)
+            if choose == int(self.TestPort):
+                self.test(data)
                 return 0, None
+            return data, choose
         else:
-            return None, None
+            return 0, None
 
 
 class GateWay:
@@ -353,7 +348,7 @@ class GateWay:
     TestPort: int
     IP: str
     Name: str
-    client: ModbusClient
+    client: MersadModbusClient
     ReadingDataThread: Thread
     electrical_devices: list[Device]
     electrical_substation_id: int
@@ -444,8 +439,13 @@ class GateWay:
             self.electrical_devices = get_devices_by_substation_id(self.electrical_substation_id)
             self.thread_func = self.electrical_substation_read_data_from_plc_thread
 
-        self.client = ModbusClient(host=self.IP, port=self.Port, auto_open=True, auto_close=False,
-                                   timeout=modbus_timeout, debug=False)
+        self.client = MersadModbusClient(host=self.IP, port=self.Port, auto_open=True, auto_close=False,
+                                         timeout=modbus_timeout, debug=False,
+                                         register_for_counter=register_for_counter,
+                                         register_for_data=register_for_data,
+                                         register_for_start_read=register_for_start_read,
+                                         register_for_end_read=register_for_end_read,
+                                         register_for_test=register_for_test)
 
         self.ReadingDataThread = threading.Thread(target=self.thread_func,
                                                   args=(lambda: self.stop_thread,))
@@ -521,12 +521,8 @@ class GateWay:
             self.MessengerQ.put([VirtualText.format(Name=self.Name, format=self.TestPort, data=data), -2, -4, 2])
         # self.lbl_Test.setText(str(data))
 
-    def counter(self) -> None:
-        data = int(self.client.read_holding_registers(register_for_counter, 1)[0])
-        if data > 32767:
-            data = data - 65536
-        self.ret_num = data
-        # self.PLC_Counter_lbl.setText(str(self.ret_num))
+    def counter(self) -> int:
+        return self.client.counter()
 
     def cal_sleep_time(self) -> None:
         dps = self.DPS * 1.2
@@ -569,7 +565,8 @@ class GateWay:
                     self.ReadCounter = 0
                     self.DataCounter = 0
                     self.ret_num += 1
-                    print("PLC " + str(self.Name) + " disconnected! | retry number : " + str(self.ret_num))
+                    print("gateway {name} disconnected! | retry number : {num}".format(name=self.Name,
+                                                                                       num=self.ret_num))
                     self.disconnect()
 
                 if plc_is_open:
@@ -589,11 +586,11 @@ class GateWay:
                             self.DataCounter += 1
                             self.line_monitoring_queue.put([data, choose])
 
-                    self.connect()
+                    # self.connect()
                     # if self.checkBox_Test.isChecked():
-                    #     self.client.write_single_coil(RegisterForTest, 1)
+                    #     self.client.test(True)
                     # else:
-                    #     self.client.write_single_coil(RegisterForTest, 0)
+                    #     self.client.test(False)
                     #
                     # if self.checkBox_Counter.isChecked():
                     #     self.SleepTime = 0
@@ -607,21 +604,15 @@ class GateWay:
 
     def line_monitoring_read_data_from_plc(self):
         # Todo:in doros nashode bayad doros she az nazar annotation
-        self.client.write_single_coil(register_for_start_read, True)
-        data = self.client.read_holding_registers(register_for_data, 1)
-        self.client.write_single_coil(register_for_end_read, True)
-        if data is not None:
-            data = int(data[0])
-            if data:
-                choose, data = extract_choose(data)
-                if choose == int(self.TestPort):
-                    self.test(data)
-                    return 0, None
-                return data, choose
-            else:
+        data = self.client.safe_read_data()
+        if data:
+            choose, data = extract_choose(data)
+            if choose == int(self.TestPort):
+                self.test(data)
                 return 0, None
+            return data, choose
         else:
-            return None, None
+            return 0, None
 
     def electrical_substation_read_data_from_plc_thread(self, stop_thread: Callable[[], bool]) -> None:
         sleep(1)
@@ -644,7 +635,8 @@ class GateWay:
                         self.DataCounter = 0
                         self.ret_num += 1
 
-                        print("PLC " + str(self.Name) + " disconnected! | retry number : " + str(self.ret_num))
+                        print("gateway {name} disconnected! | retry number : {num}".format(name=self.Name,
+                                                                                           num=self.ret_num))
                         self.disconnect()
 
                     if plc_is_open:
@@ -661,9 +653,11 @@ class GateWay:
 
                         if (datetime.now() - i.last_read_time_from_device).seconds >= i.refresh_time:
                             data = self.electrical_substation_data_from_plc(this_unit_id)
-                            i.last_read_time_from_device = datetime.now()
 
-                            if data["substation_id"] != 0:
+                            if data["substation_id"] != -1:
+                                i.last_read_time_from_device = datetime.now()
+
+                            if data["substation_id"] != 0 and data["substation_id"] != -1:
                                 self.DataCounter += 1
                                 self.read_data = True
                                 self.cal_sleep_time()
@@ -684,31 +678,31 @@ class GateWay:
     def electrical_substation_data_from_plc(self, rs_485_address: int) -> dict[str, Union[int, float]]:
         self.client.unit_id(rs_485_address)
 
-        incoming_data_part1 = self.multiple_register_read("holding", 3000, 17, "FLOAT32")
-        # print(incoming_data_part1)
+        incoming_data_part1 = self.client.multiple_register_read("holding", 3000, 17, "FLOAT32")
         num = incoming_data_part1[0]
         if not num != num:
-            incoming_data_part2 = self.multiple_register_read("holding", 3036, 21, "FLOAT32")
-            incoming_data_part3 = self.multiple_register_read("holding", 3078, 8, "4Q_FP_PF")
-            incoming_data_part4 = self.multiple_register_read("holding", 3110, 1, "FLOAT32")
-            incoming_data_part5 = self.multiple_register_read("holding", 3194, 1, "FLOAT32")
-            incoming_data_part6 = self.multiple_register_read("holding", 3204, 12, "INT64")
-            incoming_data_part7 = self.multiple_register_read("holding", 3272, 4, "INT64")
-            incoming_data_part8 = self.multiple_register_read("holding", 3304, 12, "INT64")
-            incoming_data_part9 = self.multiple_register_read("holding", 3518, 9, "INT64")
+            incoming_data_part2 = self.client.multiple_register_read("holding", 3036, 21, "FLOAT32")
+            incoming_data_part3 = self.client.multiple_register_read("holding", 3078, 8, "4Q_FP_PF")
+            incoming_data_part4 = self.client.multiple_register_read("holding", 3110, 1, "FLOAT32")
+            incoming_data_part5 = self.client.multiple_register_read("holding", 3194, 1, "FLOAT32")
+            incoming_data_part6 = self.client.multiple_register_read("holding", 3204, 12, "INT64")
+            incoming_data_part7 = self.client.multiple_register_read("holding", 3272, 4, "INT64")
+            incoming_data_part8 = self.client.multiple_register_read("holding", 3304, 12, "INT64")
+            incoming_data_part9 = self.client.multiple_register_read("holding", 3518, 9, "INT64")
             try:
-                if incoming_data_part1 is not None:
-                    incoming_data = incoming_data_part1 + \
-                                    incoming_data_part2 + \
-                                    incoming_data_part3 + \
-                                    incoming_data_part4 + \
-                                    incoming_data_part5 + \
-                                    incoming_data_part6 + \
-                                    incoming_data_part7 + \
-                                    incoming_data_part8 + \
-                                    incoming_data_part9
-                else:
-                    return {"substation_id": 0}
+                incoming_data = incoming_data_part1 + \
+                                incoming_data_part2 + \
+                                incoming_data_part3 + \
+                                incoming_data_part4 + \
+                                incoming_data_part5 + \
+                                incoming_data_part6 + \
+                                incoming_data_part7 + \
+                                incoming_data_part8 + \
+                                incoming_data_part9
+
+                for val in incoming_data:
+                    if val != val:
+                        return {"substation_id": 0}
 
                 dict_data_out = {
                     "substation_id": self.electrical_substation_id,
@@ -817,118 +811,7 @@ class GateWay:
                 return dict_data_out
 
             except:
-                print("Error in Read Data From PM2100")
+                # print("Error in Read Data From PM2100")
+                return {"substation_id": -1}
         else:
-            return {"substation_id": 0}
-
-    def single_register_read(self, _input_or_holding, _address, _data_type, _big_endian=False):
-        data = 0
-        if _data_type == "32bit_float":
-            if _input_or_holding == "input":
-                data = self.client.read_input_registers(_address, 2)
-            if _input_or_holding == "holding":
-                data = self.client.read_holding_registers(_address, 2)
-            if data:
-                list_32_bits = utils.word_list_to_long(data, big_endian=_big_endian)
-                float_32bit_val = round(utils.decode_ieee(list_32_bits[0]), 2)
-
-                return float_32bit_val
-
-        if _data_type == "16bit_uint":
-            if _input_or_holding == "input":
-                data = self.client.read_input_registers(_address, 1)
-            if _input_or_holding == "holding":
-                data = self.client.read_holding_registers(_address, 1)
-
-            if data:
-                uint_16bit_val = data[0]
-
-                return uint_16bit_val
-
-    def multiple_register_read(self, _input_or_holding, _address, _length, _data_type, _big_endian=False):
-        data = 0
-        if _data_type == "FLOAT32":
-            list_float_32bit = []
-            if _input_or_holding == "input":
-                data = self.client.read_input_registers(_address, 2 * _length)
-            if _input_or_holding == "holding":
-                data = self.client.read_holding_registers(_address, 2 * _length)
-            if data:
-                list_32_bits = utils.word_list_to_long(data, big_endian=_big_endian)
-                for val in list_32_bits:
-                    list_float_32bit.append(round(utils.decode_ieee(val), 2))
-
-                return list_float_32bit
-
-        if _data_type == "INT16":
-            if _input_or_holding == "input":
-                data = self.client.read_input_registers(_address, _length)
-            if _input_or_holding == "holding":
-                data = self.client.read_holding_registers(_address, _length)
-            if data:
-                list_uint_16bit = data
-
-                return list_uint_16bit
-
-        if _data_type == "4Q_FP_PF":
-            list_4_q_fp_pf = []
-            if _input_or_holding == "input":
-                data = self.client.read_input_registers(_address, _length * 2)
-            if _input_or_holding == "holding":
-                data = self.client.read_holding_registers(_address, _length * 2)
-            if data:
-                list_32_bits = utils.word_list_to_long(data, big_endian=_big_endian)
-                for val in list_32_bits:
-                    list_4_q_fp_pf.append(round(utils.decode_ieee(val), 2))
-
-                return list_4_q_fp_pf
-
-        if _data_type == "INT64":
-            list_int_64 = []
-            if _input_or_holding == "input":
-                data = self.client.read_input_registers(_address, _length * 4)
-            if _input_or_holding == "holding":
-                data = self.client.read_holding_registers(_address, _length * 4)
-            if data:
-                while len(data) >= 4:
-                    this_int_64 = (data[0:4][3] << 16 * 3) + (data[0:4][2] << 16 * 2) + (data[0:4][1] << 16 * 1) + \
-                                  data[0:4][
-                                      0]
-                    list_int_64.append(this_int_64)
-                    del data[0:4]
-
-                return list_int_64
-
-    def read_on_timer(self):
-        self.client.unit_id(13)
-        a = self.multiple_register_read("input", 1, 1, "INT64")
-        if a:
-            if a[0]:
-                sec = a[0] / 1000
-                minute = sec / 60
-                hour = minute / 60
-
-                print("sec = ", round(sec, 1), " | ", "min = ", round(minute, 1), " | ", "hour = ", round(hour, 1))
-                return sec, minute, hour
-
-        return -1, -1, -1
-
-    def read_on_board_sensors(self):
-        self.client.unit_id(13)
-        a = self.multiple_register_read("input", 1000, 1, "INT16")
-        if a:
-            if a[0]:
-                # print(a[0])
-                return a[0]
-
-        return -1
-
-    def read_temperature(self):
-        self.client.unit_id(13)
-        a = self.multiple_register_read("input", 5, 1, "FLOAT32")
-        if a:
-            if a[0]:
-                # print(a[0])
-                return a[0]
-
-        return -1
+            return {"substation_id": -1}

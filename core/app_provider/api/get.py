@@ -1,4 +1,3 @@
-import json
 from typing import Union
 
 import requests
@@ -26,9 +25,8 @@ def get_from_site_db(get_url: str, get_timeout: int, db_path: str = '', table_na
     else:
         status_code = response.status_code
         if status_code == 200:
-            r = response.text
             try:
-                r = json.loads(r)
+                r = response.json()
             except Exception as e:
                 print("bad response")
                 return False, "bad response " + str(e)
@@ -68,9 +66,12 @@ def site_connection(url: str, timeout: int, data=None, header=None, params=None)
 
     else:
         status_code = response.status_code
-
         if status_code == 200:
-            r = response.json()
+            try:
+                r = response.json()
+            except Exception as e:
+                print("bad response")
+                return False, "bad response " + str(e)
             if "status" in r:
                 if r["status"] is True:
                     return r["status"], r
