@@ -12,3 +12,5 @@ File/DataBase/
 *.pyc
 
 *.py~
+
+output/
