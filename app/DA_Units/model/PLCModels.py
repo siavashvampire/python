@@ -624,6 +624,8 @@ class GateWay:
                 break
 
             for i in self.electrical_devices:
+                if stop_thread():
+                    break
                 this_unit_id = i.unit
                 sleep(self.SleepTime)
                 try:
@@ -681,6 +683,7 @@ class GateWay:
         incoming_data_part1 = self.client.multiple_register_read("holding", 3000, 17, "FLOAT32")
         num = incoming_data_part1[0]
         if not num != num:
+            # Todo:bar asas device type nis
             incoming_data_part2 = self.client.multiple_register_read("holding", 3036, 21, "FLOAT32")
             incoming_data_part3 = self.client.multiple_register_read("holding", 3078, 8, "4Q_FP_PF")
             incoming_data_part4 = self.client.multiple_register_read("holding", 3110, 1, "FLOAT32")

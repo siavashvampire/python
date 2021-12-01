@@ -103,8 +103,14 @@ class Main:
                                                   bale_org_update_func=self.bale_org.update_system,
                                                   da_units_update_func=self.da_units.update_system)
 
+        # TODO:ta man nagoftam nabayad hich system run beshe bayad run haro azesh bekesham biron
+
         self.update_controller.update_queue.put(True)
         self.sender_thread.update_queue = self.update_controller.update_queue
+
+        # STARTING SYSTEM
+        self.da_units.state_thread(state=True, program=True)
+        # ------------------------
 
         self.main_ui.Backup_Submit_pb.clicked.connect(self.backup_thread.update_app)
         self.main_ui.Sensor_Status.Sensor_Submit_pb.clicked.connect(self.line_monitoring.create_sensors)

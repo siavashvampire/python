@@ -35,8 +35,6 @@ class DAUnits:
         self.units = []
         self.state = False
         self.stop_check = False
-        # self.update_system()
-        # TODO:update system bayad baresh darim
         self.create_units()
 
     def create_units(self) -> None:
@@ -53,11 +51,10 @@ class DAUnits:
                                           line_monitoring_queue=self.line_monitoring_queue,
                                           electrical_substation_queue=self.electrical_substation_queue))
 
-            # TODO:bayad joda she bayad jaye all bashe onaie k fght PLC hastan v onaie k fght gateway hastan
             print("PLCsDB Created!")
             print("{} devices connected".format(len(self.units)))
-            for plc in self.units:
-                plc.run_thread()
+            # for plc in self.units:
+            #     plc.run_thread()
         else:
             self.units = []
 
@@ -108,12 +105,15 @@ class DAUnits:
         for plc in self.units:
             plc.stop_thread = True
         for plc in self.units:
-            plc.ReadingDataThread.join()
+            if plc.ReadingDataThread.is_alive():
+                plc.ReadingDataThread.join()
+            else:
+                print("plc " + plc.Name + " not alive")
         #     TODO:check konim bebinim age ghablesh tamom shode bashe join mide
         self.stop_check = True
         self.state = False
         self.thread_label.setIcon(Pics.OFF)
-        print("stop Line")
+        print("stop Da units")
 
     def start_func(self):
         for plc in self.units:
@@ -136,6 +136,13 @@ class DAUnits:
         get_from_site_db(get_url=main_get_da_unit_url, get_timeout=da_units_get_timeout, db_path=da_unit_db_path,
                          table_name=da_unit_table_name)
 
-    def update_system(self, where_should_update: tuple[str] = ())->None:
+    def update_system(self, where_should_update: tuple[str] = ()) -> None:
         self.read_all_units()
+
+        self.should_stop = True
+        self.state_thread(state=False, program=True)
+
         self.create_units()
+
+        self.should_stop = False
+        self.state_thread(state=True, program=True)
