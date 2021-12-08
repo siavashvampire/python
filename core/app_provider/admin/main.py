@@ -105,7 +105,8 @@ class Main:
 
         # TODO:ta man nagoftam nabayad hich system run beshe bayad run haro azesh bekesham biron
 
-        self.update_controller.update_queue.put(True)
+        # self.update_controller.update_queue.put(True)
+        self.update_controller.update_all()
         self.sender_thread.update_queue = self.update_controller.update_queue
 
         # STARTING SYSTEM

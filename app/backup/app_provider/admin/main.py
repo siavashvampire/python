@@ -62,13 +62,14 @@ class BackupMain:
                 self.last_check = datetime.now()
 
     def create_backup(self) -> None:
-        if len(self.BackupDB):
-            r = self.BackupDB.all()
-            self.Backup = [BackupModel(db_id=i.doc_id, queue=self.BackupQ,
-                                       last_backup_time=datetime.strptime(i["LastBackup"], time_format),
-                                       time=i["Time"], path=i["Path"], file_name=i["FileName"], name=i["Name"],
-                                       ui=self.ui) for i in r]
-            print("Backup Created!")
+        self.Backup.clear()
+        r = self.BackupDB.all()
+        for i in r:
+            self.Backup.append(BackupModel(db_id=i.doc_id, queue=self.BackupQ,
+                                           last_backup_time=datetime.strptime(i["LastBackup"], time_format),
+                                           time=i["Time"], path=i["Path"], file_name=i["FileName"], name=i["Name"],
+                                           ui=self.ui))
+        print("Backup Created!")
 
     def get_backup_from_ui(self) -> None:
         prop = Query()

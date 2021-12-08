@@ -1,7 +1,6 @@
 from time import sleep
-from queue import Queue
 from threading import Thread
-from typing import Union, Callable
+from typing import Callable
 
 from PyQt5.QtWidgets import QLabel
 from tinydb import TinyDB, Query
@@ -30,6 +29,7 @@ class ElectricalSubstation:
         self.stop_check = False
         self.should_stop = False
         self.thread_label = thread_label
+        self.devices = []
         # self.messenger_queue = messenger_queue
 
         # self.mergeData = Cronjob(sender_state_func=sender_state_func)
@@ -62,10 +62,12 @@ class ElectricalSubstation:
     def create_devices(self):
         devices_db = TinyDB(device_db_path).table(device_table_name)
         # TODO:check konim bebinim hatman age data base haw khali bashi chi mishe error mdie ya na
+        self.devices.clear()
 
         devices = devices_db.all()
-        self.devices = [Device(substation=int(i["substation_id"]), unit=int(i["unitId"]), sender_queue=self.ArchiveQ)
-                        for i in devices]
+        for i in devices:
+            self.devices.append(
+                Device(substation=int(i["substation_id"]), unit=int(i["unitId"]), sender_queue=self.ArchiveQ))
 
     def db_update_all(self):
         self.read_all_device_data()

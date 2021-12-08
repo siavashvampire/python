@@ -430,7 +430,7 @@ class GateWay:
         self.IP = sea["IP"]
         self.Name = sea["label"]
 
-        if self.app_name == "Mersad Monitoring System":
+        if self.app_name == "LineMonitoring":
             self.thread_func = self.line_monitoring_read_data_from_plc_thread
         elif "ElectricalSubstation" in self.app_name:
             s = self.app_name.split("_")
@@ -626,7 +626,6 @@ class GateWay:
             for i in self.electrical_devices:
                 if stop_thread():
                     break
-                this_unit_id = i.unit
                 sleep(self.SleepTime)
                 try:
                     # plc_is_open = self.client.is_open()
@@ -654,7 +653,7 @@ class GateWay:
                             self.cal_sleep_time()
 
                         if (datetime.now() - i.last_read_time_from_device).seconds >= i.refresh_time:
-                            data = self.electrical_substation_data_from_plc(this_unit_id)
+                            data = self.electrical_substation_data_from_plc(i.unit, i.device_type)
 
                             if data["substation_id"] != -1:
                                 i.last_read_time_from_device = datetime.now()
@@ -677,7 +676,8 @@ class GateWay:
                     Logging.da_log("send and receive " + str(self.DBid), str(e))
                     break
 
-    def electrical_substation_data_from_plc(self, rs_485_address: int) -> dict[str, Union[int, float]]:
+    def electrical_substation_data_from_plc(self, rs_485_address: int, device_type: int) -> dict[
+        str, Union[int, float]]:
         self.client.unit_id(rs_485_address)
 
         incoming_data_part1 = self.client.multiple_register_read("holding", 3000, 17, "FLOAT32")

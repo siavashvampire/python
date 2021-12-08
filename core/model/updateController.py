@@ -11,7 +11,7 @@ class UpdateController:
     update_queue: Queue[bool]
     checkForUpdate: Thread
 
-    def __init__(self, line_monitoring_update_func: Callable[[tuple[str]], None],
+    def __init__(self, line_monitoring_update_func: Callable[[tuple[str,str]], None],
                  electrical_update_func: Callable[[], None],
                  bale_org_update_func: Callable[[], None],
                  da_units_update_func: Callable[[], None]) -> None:
@@ -74,3 +74,11 @@ class UpdateController:
         if app_order[3] in keys and r[app_order[3]] is not None:
             print("DAUnits")
             self.da_units_update_func()
+
+    def update_all(self):
+        self.bale_org_update_func()
+        self.line_monitoring_update_func(("sensor_update", "switch_update"))
+        self.electrical_update_func()
+        self.da_units_update_func()
+
+

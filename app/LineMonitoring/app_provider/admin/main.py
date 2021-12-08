@@ -47,7 +47,6 @@ class LineMonitoring:
         self.ArchiveQ = sender_queue
         self.sensors = []
         self.switch = []
-        self.update_system()
         self.create_sensors()
         self.stop_thread = False
         self.Thread = Thread(target=self.line_monitoring,
@@ -107,15 +106,21 @@ class LineMonitoring:
             self.RDThread.restart_thread()
 
     def create_sensors(self) -> None:
+        self.sensors.clear()
+        self.switch.clear()
         sensor_db = TinyDB(sensor_db_path).table(sensor_table_name)
         switch_db = TinyDB(switch_db_path).table(switch_table_name)
         # TODO:check konim bebinim hatman age data base haw khali bashi chi mishe error mdie ya na
 
-        r = sensor_db.all()
+        sensors = sensor_db.all()
         switches = switch_db.all()
-        self.switch = [CamSwitch(switch_id=int(i["id"]), sender_queue=self.ArchiveQ) for i in switches]
+        # self.switch = [CamSwitch(switch_id=int(i["id"]), sender_queue=self.ArchiveQ) for i in switches]
 
-        self.sensors = [Sensor(sensor_id=int(i["id"]), ui=self.ui, sender_queue=self.ArchiveQ) for i in r]
+        # self.sensors = [Sensor(sensor_id=int(i["id"]), ui=self.ui, sender_queue=self.ArchiveQ) for i in sensors]
+        for i in sensors:
+            self.sensors.append(Sensor(sensor_id=int(i["id"]), ui=self.ui, sender_queue=self.ArchiveQ))
+        for i in switches:
+            self.switch.append(CamSwitch(switch_id=int(i["id"]), sender_queue=self.ArchiveQ))
 
     def db_update_all(self) -> None:
         self.read_all_sensor_data()
@@ -186,10 +191,10 @@ class LineMonitoring:
         self.state = True
         self.thread_label.setIcon(Pics.ON)
 
-    def update_system(self, where_should_update: tuple[str] = ("sensor_update", "switch_update")) -> None:
+    def update_system(self, where_should_update: tuple[str, str] = ("sensor_update", "switch_update")) -> None:
         if "sensor_update" in where_should_update:
-            self.read_all_switch_data()
-        if "switch_update" in where_should_update:
             self.read_all_sensor_data()
+        if "switch_update" in where_should_update:
+            self.read_all_switch_data()
 
         self.create_sensors()

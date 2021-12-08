@@ -143,9 +143,11 @@ class BaleMain:
     def create_phones(self) -> None:
         r = TinyDB(phone_db_path).table(phone_table_name).all()
         phones = TinyDB(sms_phone_db_path).table(sms_phone_table_name).all()
-        self.phones_bale = [PhoneData(i["name"], i["phone"], i["send_allow"], i["units"], i["phase"], i["access"])
-                            for i in r]
-        self.phones_SMS = [SMSPhones(i["name"], i["phone"], i["units"], i["phase"], i["access"]) for i in phones]
+        for i in r:
+            self.phones_bale.append(
+                PhoneData(i["name"], i["phone"], i["send_allow"], i["units"], i["phase"], i["access"]))
+        for i in phones:
+            self.phones_SMS.append(SMSPhones(i["name"], i["phone"], i["units"], i["phase"], i["access"]))
 
     def send_to_phones(self, stop_thread: Callable[[], bool]) -> None:
         while True:

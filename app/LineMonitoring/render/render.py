@@ -38,8 +38,7 @@ class RenderingDataThread:
                 sensor_chosen = find_sensor_choose(choose, self.sensor)
                 switch_chosen = find_switch_choose(choose, self.switch)
 
-                if (switch_chosen.Switch_id and sensor_chosen.sensor_id) or (
-                        switch_chosen.Switch_id and sensor_chosen.sensor_id):
+                if not (switch_chosen.Switch_id or sensor_chosen.sensor_id):
                     r = "Sensor not Found , Choose : " + str(choose)
                     print(r)
                     Logging.line_monitoring_log("Check Choose", str(r))

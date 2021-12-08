@@ -141,5 +141,5 @@ class MersadModbusClient(ModbusClient):
             return int(data[0])
         return None
 
-    def test(self, status: bool = False):
+    def test(self, status: bool = False) -> None:
         self.write_single_coil(self.register_for_test, status)
