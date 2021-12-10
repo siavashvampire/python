@@ -12,5 +12,6 @@ File/DataBase/
 *.pyc
 
 *.py~
+*.exe
 
 output/

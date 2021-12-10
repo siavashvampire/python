@@ -10,3 +10,5 @@ pip install pandas
 pip install PyQt5Designer
 pip install PyQt5-stubs==5.15.2.0
 pip install auto-py-to-exe
+pip install pywhatkit
+pip install pywin32
