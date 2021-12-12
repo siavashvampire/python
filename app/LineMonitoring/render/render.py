@@ -7,7 +7,8 @@ from persiantools.jdatetime import JalaliDateTime
 import app.Logging.app_provider.admin.MersadLogging as Logging
 from app.LineMonitoring.model.CamSwitch import find_switch_choose, CamSwitch
 from app.LineMonitoring.model.Sensor import find_sensor_choose, Sensor
-from core.config.Config import off_cam_switch_value, on_cam_switch_value
+from core.config.Config import off_cam_switch_value, on_cam_switch_value, choose_of_bale, choose_of_sms, \
+    choose_of_whatsApp
 
 
 class RenderingDataThread:
@@ -64,13 +65,15 @@ class RenderingDataThread:
                                 sensor_chosen.phaseLabel) + " " + str(
                                 now1) + "روشن شده است"
                             self.messenger_queue.put(
-                                [on_sensor_bale_text, sensor_chosen.unit, sensor_chosen.phase, 1])
+                                [on_sensor_bale_text, sensor_chosen.unit, sensor_chosen.phase, choose_of_bale])
+                            self.messenger_queue.put(
+                                [on_sensor_bale_text, sensor_chosen.unit, sensor_chosen.phase, choose_of_whatsApp])
                     if sms_report_flag:
                         now1 = JalaliDateTime.to_jalali(datetime.now()).strftime('در %y/%m/%d ساعت %H:%M:%S')
                         on_sensor_sms_text = str(sensor_chosen.label) + " فاز " + str(
                             sensor_chosen.phaseLabel) + " " + str(
                             now1) + "روشن شده است"
-                        self.messenger_queue.put([on_sensor_sms_text, sensor_chosen.unit, sensor_chosen.phase, 2])
+                        self.messenger_queue.put([on_sensor_sms_text, sensor_chosen.unit, sensor_chosen.phase, choose_of_sms])
 
                 if switch_chosen.Switch_id:
                     active_temp = ""
@@ -93,9 +96,9 @@ class RenderingDataThread:
                         JalaliDateTime.to_jalali(datetime.now()).strftime(
                             'در %y/%m/%d ساعت %H:%M:%S')) + "روشن شده است"
                     if bale_report_flag:
-                        self.messenger_queue.put([on_switch_text, switch_chosen.unit, switch_chosen.phase, 1])
+                        self.messenger_queue.put([on_switch_text, switch_chosen.unit, switch_chosen.phase, choose_of_bale])
                     if sms_report_flag:
-                        self.messenger_queue.put([on_switch_text, switch_chosen.unit, switch_chosen.phase, 2])
+                        self.messenger_queue.put([on_switch_text, switch_chosen.unit, switch_chosen.phase, choose_of_sms])
 
             else:
                 if stop_thread():

@@ -6,11 +6,12 @@ from threading import Thread
 from typing import List, Union, Callable
 
 from PyQt5.QtWidgets import QLabel
+from telegram import Bot
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Dispatcher
-from tinydb import TinyDB
+from tinydb import TinyDB, Query
 
 import app.Logging.app_provider.admin.MersadLogging as Logging
-from app.Bale.model.PhoneModel import PhoneData
+from app.Bale.model.BalePhoneModel import BalePhoneModel
 from app.Bale.model.SMSPhoneModel import SMSPhoneData as SMSPhones
 from app.LineMonitoring.app_provider.api.ReadText import EnrollOK, EnrollRepeat, ActiveText, DeactivationText, \
     CheckingText, SendExportText, SendingHelpText, PDFReport, CSVReport, NotInsert, BlockText, HelpText, \
@@ -93,8 +94,7 @@ class BaleMain:
     sender_queue: Queue
     updater: Updater
     TextQ: Queue[list[str, int, int, int]]
-    phones_bale: List[PhoneData]
-    phones_SMS: List[SMSPhones]
+    phones: List[Union[BalePhoneModel, SMSPhones]]
     OpenThread: Thread
     SendThread: Thread
 
@@ -106,14 +106,14 @@ class BaleMain:
         self.stop_check = False
         self.Trying = False
         self.stop_thread = False
-        self.phones_bale = []
-        self.phones_SMS = []
+        self.phones = []
         self.BaleStatus_label = bale_status_label
         self.thread_label = thread_label
         self.data_type = bale_data
         self.sender_queue = sender_queue
         self.updater = Updater(token=bale_token, base_url=bale_base_url)
         dp: Dispatcher = self.updater.dispatcher
+        self.bot_main: Bot = self.updater.bot
         self.TextQ = Queue()
         self.create_phones()
 
@@ -141,13 +141,18 @@ class BaleMain:
         Logging.bale_log("Bale Init", "SendThread is run")
 
     def create_phones(self) -> None:
-        r = TinyDB(phone_db_path).table(phone_table_name).all()
-        phones = TinyDB(sms_phone_db_path).table(sms_phone_table_name).all()
+        r = TinyDB(phone_db_path).table(phone_table_name).search(Query().type == 1)
+        phones = TinyDB(phone_db_path).table(phone_table_name).search(Query().type == 2)
+        whatsApp = TinyDB(phone_db_path).table(phone_table_name).search(Query().type == 3)
+        self.phones
         for i in r:
-            self.phones_bale.append(
-                PhoneData(i["name"], i["phone"], i["send_allow"], i["units"], i["phase"], i["access"]))
+            self.phones.append(
+                BalePhoneModel(i["name"], i["phone"], i["send_allow"], i["units"], i["phase"], i["access"],
+                               bot=self.bot_main))
         for i in phones:
-            self.phones_SMS.append(SMSPhones(i["name"], i["phone"], i["units"], i["phase"], i["access"]))
+            self.phones.append(SMSPhones(i["name"], i["phone"], i["units"], i["phase"], i["access"]))
+        for i in whatsApp:
+            self.phones.append(SMSPhones(i["name"], i["phone"], i["units"], i["phase"], i["access"]))
 
     def send_to_phones(self, stop_thread: Callable[[], bool]) -> None:
         while True:
@@ -155,37 +160,20 @@ class BaleMain:
                 text, id_temp, phase, choose = self.TextQ.get()
                 self.TextQ.task_done()
                 if text:
-                    if choose == 1:
-                        for i in self.phones_bale:
-                            # if self.Flag_Bale == False:
-                            #     self.TextQ.put([text , id_temp , phase , choose])
-                            #     break
-                            if i.SendONOFF or (id_temp < 0):
-                                if i.Access:
-                                    if i.check(id_temp, phase):
-                                        try:
-                                            self.updater.bot.send_message(i.id, text)
-                                        except:
-                                            self.Flag_Bale = False
-                                            Logging.bale_log("Send Thread", "Error in send with id " + str(i.id))
-                                            if login_developer:
-                                                print("Error in send with id " + str(i.id))
-                    if choose == 2:
-                        for phone in self.phones_SMS:
-                            if not self.Flag_Bale:
-                                self.TextQ.put([text, id_temp, phase, choose])
-                                break
-                            if phone.Access:
-                                if phone.check(id_temp, phase):
-                                    try:
-                                        phone.send(text)
-                                    except Exception as e:
-                                        print(e)
-                                        self.Flag_Bale = False
-                                        Logging.bale_log("Send Thread",
-                                                         "Error in send SMS with Number " + str(phone.Phone))
-                                        if login_developer:
-                                            print("Error in send SMS with Phone " + str(phone.Phone))
+                    if not self.Flag_Bale:
+                        self.TextQ.put([text, id_temp, phase, choose])
+                        break
+
+                    for phone in self.phones:
+                        if phone.check(id_temp, phase, choose):
+                            try:
+                                phone.send(text)
+                            except Exception as e:
+                                self.Flag_Bale = False
+                                Logging.bale_log("Send Thread",
+                                                 "Error in send SMS with Number " + str(phone.id))
+                                if login_developer:
+                                    print("Error in send SMS with Phone " + str(phone.id))
                 else:
                     if stop_thread():
                         Logging.bale_log("Main Send Thread", "Stop")
@@ -214,7 +202,7 @@ class BaleMain:
                     if not self.Trying:
                         try:
                             self.Trying = True
-                            self.updater.bot.delete_webhook()
+                            self.bot_main.delete_webhook()
                             self.updater.start_polling(poll_interval=2)
                             self.Flag_Bale = True
                             if self.BaleStatus_label is not None:
@@ -243,7 +231,7 @@ class BaleMain:
     def all_counter(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == PhoneData:
+        if type(acc) == BalePhoneModel:
             try:
                 update.message.reply_text(get_online_counter(acc.get_abs_unit_id(), acc.get_phase()))
             except Exception as e:
@@ -256,7 +244,7 @@ class BaleMain:
     def all_activity(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == PhoneData:
+        if type(acc) == BalePhoneModel:
             try:
                 update.message.reply_text(get_sensor_activity(acc.get_abs_unit_id(), acc.get_phase()))
             except Exception as e:
@@ -269,9 +257,9 @@ class BaleMain:
     def active_on_off(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == PhoneData:
+        if type(acc) == BalePhoneModel:
             try:
-                acc.on_off_active(1)
+                acc.on_off_active(True)
                 update.message.reply_text(ActiveText)
             except Exception as e:
                 if acc.check_developer_access():
@@ -283,9 +271,9 @@ class BaleMain:
     def deactivate_on_off(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == PhoneData:
+        if type(acc) == BalePhoneModel:
             try:
-                acc.on_off_active(0)
+                acc.on_off_active(False)
                 update.message.reply_text(DeactivationText)
             except Exception as e:
                 if acc.check_developer_access():
@@ -297,7 +285,7 @@ class BaleMain:
     def shift_report_pdf(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == PhoneData:
+        if type(acc) == BalePhoneModel:
             s = update.message.reply_text(text=PDFReport)
             payload = "showField%5B%5D=data.phase&showField%5B%5D=data.unitId&showField%5B%5D=CONCAT(" \
                       "data.tile_width%2C%20'%C3%97'%2C%20data.tile_length)&showField%5B%5D=data.tile_name" \
@@ -337,7 +325,7 @@ class BaleMain:
     def shift_report_csv(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == PhoneData:
+        if type(acc) == BalePhoneModel:
             s = update.message.reply_text(text=CSVReport)
             payload = "showField%5B%5D=data.phase&showField%5B%5D=data.unitId&showField%5B%5D=CONCAT(" \
                       "data.tile_width%2C%20'%C3%97'%2C%20data.tile_length)&showField%5B%5D=data.tile_name" \
@@ -377,7 +365,7 @@ class BaleMain:
     def shift_off_report_pdf(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == PhoneData:
+        if type(acc) == BalePhoneModel:
             s = update.message.reply_text(text=PDFReport)
             payload = "showField%5B%5D=data.phase&showField%5B%5D=data.unitId&showField%5B%5D=arch1.reason" \
                       "&showField%5B%5D=arch1.description&showField%5B%5D=arch1.JStart_time&showField%5B%5D" \
@@ -414,7 +402,7 @@ class BaleMain:
     def shift_off_report_csv(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == PhoneData:
+        if type(acc) == BalePhoneModel:
             s = update.message.reply_text(text=CSVReport)
             payload = "showField%5B%5D=data.phase&showField%5B%5D=data.unitId&showField%5B%5D=arch1.reason" \
                       "&showField%5B%5D=arch1.description&showField%5B%5D=arch1.JStart_time&showField%5B%5D" \
@@ -451,7 +439,7 @@ class BaleMain:
     def help_pdf(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == PhoneData:
+        if type(acc) == BalePhoneModel:
             try:
                 s = update.message.reply_text(text=SendingHelpText)
                 update.message.reply_document(document=open(file=help_file_name + ".pdf", mode='rb'),
@@ -468,7 +456,7 @@ class BaleMain:
     def help(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == PhoneData:
+        if type(acc) == BalePhoneModel:
             try:
                 update.message.reply_text(HelpText)
             except Exception as e:
@@ -482,7 +470,7 @@ class BaleMain:
         try:
             id_temp = update.message.chat.id
             acc = self.handle_access(id_temp)
-            if type(acc) == PhoneData:
+            if type(acc) == BalePhoneModel:
                 if acc.check_developer_access():
                     try:
                         self.create_phones()
@@ -499,10 +487,10 @@ class BaleMain:
     def show_access(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == PhoneData:
+        if type(acc) == BalePhoneModel:
             if acc.check_developer_access():
                 text_temp = ""
-                for i in self.phones_bale:
+                for i in self.phones:
                     text_temp += ShowAccessText.format(id=i.id, Name=i.Name, Access=i.Access)
                 update.message.reply_text(text_temp)
             else:
@@ -513,7 +501,7 @@ class BaleMain:
     def checking_text(self, bot, update) -> None:
         id_temp = update.message.chat.id
         acc = self.handle_access(id_temp)
-        if type(acc) == PhoneData:
+        if type(acc) == BalePhoneModel:
             if acc.check_developer_access():
                 text = update.message.text
                 x = text.split(" : ")
@@ -522,7 +510,7 @@ class BaleMain:
                     text_rec = x[1]
                     iscommand, text = self.check_command(id_rec, text_rec)
                     if not iscommand:
-                        self.updater.bot.send_message(id_rec, text_rec)
+                        self.bot_main.send_message(id_rec, text_rec)
                     else:
                         update.message.reply_text(text)
                 except Exception as e:
@@ -544,13 +532,13 @@ class BaleMain:
             self.SendThread = Thread(target=self.send_to_phones, args=(lambda: self.stop_thread,))
             self.SendThread.start()
 
-    def get_phone(self, id_temp: int) -> PhoneData:
-        for i in self.phones_bale:
+    def get_phone(self, id_temp: int) -> BalePhoneModel:
+        for i in self.phones:
             if i.id == id_temp:
                 return i
-        return PhoneData()
+        return BalePhoneModel()
 
-    def handle_access(self, id_temp: int) -> Union[PhoneData, str]:
+    def handle_access(self, id_temp: int) -> Union[BalePhoneModel, str]:
         phone = self.get_phone(id_temp)
         if not phone.id:
             return NotInsert
@@ -566,17 +554,17 @@ class BaleMain:
         if text == "Access ON":
             iscommand = True
             if phone.id:
-                phone.set_access(1)
+                phone.set_access(True)
                 self.create_phones()
-                self.updater.bot.send_message(id_temp, AccessONText)
+                self.bot_main.send_message(id_temp, AccessONText)
                 text = PhoneCreateText + AccessONText
 
         if text == "Access OFF":
             iscommand = True
             if phone.id:
-                phone.set_access(0)
+                phone.set_access(False)
                 self.create_phones()
-                self.updater.bot.send_message(id_temp, AccessOFFText)
+                self.bot_main.send_message(id_temp, AccessOFFText)
                 text = PhoneCreateText + AccessOFFText
 
         if not phone.id:

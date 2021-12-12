@@ -28,6 +28,9 @@ bale_base_url = sAll["bale_base_url"]
 help_file_name = sAll["help_file_name"]
 help_file_name = resource_path(help_file_name)
 help_pdf_timeout = int(sAll["help_pdf_timeout"])
+choose_of_bale = 1
+choose_of_sms = 2
+choose_of_whatsApp = 3
 # end  Bale Config
 
 # start  format Config
@@ -100,7 +103,7 @@ costumer = sAll["costumer"]
 remove_db_flag = int(sAll["remove_db_flag"])
 # end  DB Config
 
-# Start  SMS Config
+# Start  SMS Configz
 sms_username = sAll["sms_username"]
 sms_password = sAll["sms_password"]
 sms_phone = sAll["sms_phone"]

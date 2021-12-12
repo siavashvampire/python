@@ -7,7 +7,7 @@ import app.Logging.app_provider.admin.MersadLogging as Logging
 from app.shift.model.Day import isDayUpdated, adminDayCounter
 from core.app_provider.api.get import site_connection
 from core.config.Config import main_cronjob_update_shift_url, cronjob_timeout, main_cronjob_update_day_url, \
-    shift_check_time, adminUnit
+    shift_check_time, adminUnit, choose_of_bale, choose_of_sms
 
 
 class Cronjob:
@@ -35,8 +35,8 @@ class Cronjob:
 
                     if isDayUpdated():
                         day_count = adminDayCounter()
-                        self.messenger_queue.put([day_count, adminUnit, -4, 1])
-                        self.messenger_queue.put([day_count, adminUnit, -4, 2])
+                        self.messenger_queue.put([day_count, adminUnit, -4, choose_of_bale])
+                        self.messenger_queue.put([day_count, adminUnit, -4, choose_of_sms])
                     self.sender_state_func(state=True, program=True)
                     self.last_check = datetime.now()
             except Exception as e:

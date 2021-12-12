@@ -15,7 +15,7 @@ from app.LineMonitoring.model.Sensor import Sensor
 from app.LineMonitoring.render.render import RenderingDataThread
 from core.app_provider.api.get import get_from_site_db
 from core.config.Config import main_get_sensor_url, sensor_get_timeout, sensor_db_path, sensor_on_off_time, time_format, \
-    sensor_table_name, switch_table_name
+    sensor_table_name, switch_table_name, choose_of_bale, choose_of_sms
 from core.config.Config import main_get_switch_url, switch_get_timeout, switch_db_path
 from core.config.Config import time_delay_main_loop
 from core.theme.pic import Pics
@@ -82,14 +82,14 @@ class LineMonitoring:
                                                 print("off Sensor {} send".format(s.sensor_id))
                                             off_sensor_bale_text = str(s.label) + " فاز " + str(s.phaseLabel) + str(
                                                 now_te.strftime(' در %y/%m/%d ساعت %H:%M:%S')) + " خاموش شده است"
-                                            self.messenger_queue.put([off_sensor_bale_text, s.unit, s.phase, 1])
+                                            self.messenger_queue.put([off_sensor_bale_text, s.unit, s.phase, choose_of_bale])
                             if s.OffTime_SMS:
                                 if s.Active_SMS:
                                     if diff.days or diff.seconds > s.OffTime_SMS * 60:
                                         s.Active_SMS = False
                                         off_sensor_sms_text = str(s.label) + " فاز " + str(s.phaseLabel) + str(
                                             now_te.strftime(' در %y/%m/%d ساعت %H:%M:%S')) + " خاموش شده است"
-                                        self.messenger_queue.put([off_sensor_sms_text, s.unit, s.phase, 2])
+                                        self.messenger_queue.put([off_sensor_sms_text, s.unit, s.phase, choose_of_sms])
 
             if stop_thread():
                 Logging.line_monitoring_log("Main Rendering Thread", "Stop")
