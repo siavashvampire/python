@@ -49,6 +49,7 @@ def get_from_site_db(get_url: str, get_timeout: int, db_path: str = '', table_na
 
 
 def site_connection(url: str, timeout: int, data=None, header=None, params=None) -> tuple[bool, str]:
+    # TODO:bayad hatman khorojish beshe json
     try:
         if params is None:
             response = requests.post(url, data=data, headers=header, timeout=timeout)
@@ -72,7 +73,7 @@ def site_connection(url: str, timeout: int, data=None, header=None, params=None)
             except Exception as e:
                 print("bad response")
                 return False, "bad response " + str(e)
-            if "status" in r:
+            if r is not True and "status" in r:
                 if r["status"] is True:
                     return r["status"], r
                 else:

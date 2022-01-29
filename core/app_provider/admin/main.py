@@ -85,6 +85,7 @@ class Main:
                                               thread_label=self.main_ui.Threads.ThS_PLC,
                                               ui=self.main_ui)
 
+
         self.start_splash.show_message("starting electrical substation system")
         self.electrical_substation = ElectricalSubstation(messenger_queue=self.bale_org.TextQ,
                                                           sender_queue=self.sender_thread.ArchiveQ,

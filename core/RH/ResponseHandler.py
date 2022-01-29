@@ -1,7 +1,8 @@
 from tinydb import TinyDB, Query
 
 from app.LineMonitoring.app_provider.api.ReadText import CounterResponseText, ActivityResponseText
-from core.config.Config import phone_db_path, count_for_send_list, phone_table_name
+from core.config.Config import phone_db_path, phone_table_name
+import app.Logging.app_provider.admin.MersadLogging as Logging
 
 
 def get_rh(r, status_code, db_path, table_name):
@@ -18,7 +19,6 @@ def get_rh(r, status_code, db_path, table_name):
         print(r)
     elif status_code == 200:
         try:
-            prop = Query()
             db = TinyDB(db_path)
             db.drop_table(table_name)
             db.close()
@@ -98,17 +98,20 @@ def send_data_rh(r, status):
     if status is True:
         good = True
         should_update = r["need_update"]
-        result = r["result"]
+        result: list = r["result"]
         temp_index = 0
         for i in result:
-            if i["result"]:
+            if "result" in i and i["result"]:
                 index.append(temp_index)
             else:
+                print(i)
+                Logging.sender_log("sender", str(i))
                 error.append(temp_index)
 
             temp_index += 1
 
     else:
+        Logging.sender_log("sender", str(status) + str(r))
         index = []
         error = []
     return good, index, error, should_update

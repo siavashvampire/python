@@ -117,6 +117,7 @@ class LineMonitoring:
         # self.switch = [CamSwitch(switch_id=int(i["id"]), sender_queue=self.ArchiveQ) for i in switches]
 
         # self.sensors = [Sensor(sensor_id=int(i["id"]), ui=self.ui, sender_queue=self.ArchiveQ) for i in sensors]
+
         for i in sensors:
             self.sensors.append(Sensor(sensor_id=int(i["id"]), ui=self.ui, sender_queue=self.ArchiveQ))
         for i in switches:

@@ -7,7 +7,7 @@
   },
   {
    "optionDest": "filenames",
-   "value": "C:/project/Hafez/V_0/MainCode.py"
+   "value": "D:/project/manufactor/Version/V_0/MainCode.py"
   },
   {
    "optionDest": "onefile",
@@ -19,7 +19,7 @@
   },
   {
    "optionDest": "icon_file",
-   "value": "C:/project/Hafez/V_0/core/theme/icons/logo.ico"
+   "value": "D:/project/manufactor/Version/V_0/core/theme/icons/logo.ico"
   },
   {
    "optionDest": "name",
@@ -71,19 +71,19 @@
   },
   {
    "optionDest": "datas",
-   "value": "C:/project/Hafez/V_0/core;core/"
+   "value": "D:/project/manufactor/Version/V_0/core;core/"
   },
   {
    "optionDest": "datas",
-   "value": "C:/project/Hafez/V_0/app;app/"
+   "value": "D:/project/manufactor/Version/V_0/app;app/"
   },
   {
    "optionDest": "datas",
-   "value": "C:/project/Hafez/V_0/singleton.py;."
+   "value": "D:/project/manufactor/Version/V_0/singleton.py;."
   },
   {
    "optionDest": "datas",
-   "value": "C:/project/Hafez/V_0/sololearn.py;."
+   "value": "D:/project/manufactor/Version/V_0/sololearn.py;."
   }
  ],
  "nonPyinstallerOptions": {

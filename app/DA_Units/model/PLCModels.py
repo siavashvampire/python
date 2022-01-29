@@ -354,7 +354,7 @@ class GateWay:
     electrical_substation_id: int
     app_name: str
 
-    def __init__(self, db_id: int = 0, ip: str = "192.168.1.237", port: int = 502, name: str = "", test_port: int = 0,
+    def __init__(self, db_id: int = 0, ip: str = "192.168.1.238", port: int = 502, name: str = "", test_port: int = 0,
                  messenger_queue: Queue[list[str, int, int, int]] = None,
                  app_name: str = "ElectricalSubstation_0",
                  line_monitoring_queue: Queue[list[int, int]] = None,
@@ -652,9 +652,11 @@ class GateWay:
                             #     self.PLC_Counter_lbl.setText(str(self.RPS / PLCRefreshTime))
                             self.cal_sleep_time()
 
+                        # TODO:ina hamash bayad bere dakhele khode device v fght y data bede biron
+
                         if (datetime.now() - i.last_read_time_from_device).seconds >= i.refresh_time:
                             data = self.electrical_substation_data_from_plc(i.unit, i.device_type)
-
+                            # print("data khond : sub id ", data["substation_id"], "unit id :", i.unit)
                             if data["substation_id"] != -1:
                                 i.last_read_time_from_device = datetime.now()
 
@@ -667,32 +669,41 @@ class GateWay:
                             else:
                                 pass
                                 # TODO: vaghti k none has gozaresh bede to log
-                                # print("data from unit {} is None!".format(this_unit_id))
+                                # print("data from unit {} is None!".format(i.unit))
 
                         self.connect()
 
                 except Exception as e:
-                    print(e)
+                    # print(e)
                     Logging.da_log("send and receive " + str(self.DBid), str(e))
                     break
 
-    def electrical_substation_data_from_plc(self, rs_485_address: int, device_type: int) -> dict[
-        str, Union[int, float]]:
+    def electrical_substation_data_from_plc(self, rs_485_address: int, device_type: int) -> dict[str,
+                                                                                                 Union[int, float]]:
         self.client.unit_id(rs_485_address)
 
-        incoming_data_part1 = self.client.multiple_register_read("holding", 3000, 17, "FLOAT32")
+        incoming_data_part1 = self.client.multiple_register_read("holding", 2699, 12, "FLOAT32")
         num = incoming_data_part1[0]
+
         if not num != num:
             # Todo:bar asas device type nis
-            incoming_data_part2 = self.client.multiple_register_read("holding", 3036, 21, "FLOAT32")
-            incoming_data_part3 = self.client.multiple_register_read("holding", 3078, 8, "4Q_FP_PF")
-            incoming_data_part4 = self.client.multiple_register_read("holding", 3110, 1, "FLOAT32")
-            incoming_data_part5 = self.client.multiple_register_read("holding", 3194, 1, "FLOAT32")
-            incoming_data_part6 = self.client.multiple_register_read("holding", 3204, 12, "INT64")
-            incoming_data_part7 = self.client.multiple_register_read("holding", 3272, 4, "INT64")
-            incoming_data_part8 = self.client.multiple_register_read("holding", 3304, 12, "INT64")
-            incoming_data_part9 = self.client.multiple_register_read("holding", 3518, 9, "INT64")
+            incoming_data_part2 = self.client.multiple_register_read("holding", 2999, 6, "FLOAT32")
+            incoming_data_part3 = self.client.multiple_register_read("holding", 3019, 9, "FLOAT32")
+            incoming_data_part4 = self.client.multiple_register_read("holding", 3053, 20, "FLOAT32")
+            incoming_data_part5 = self.client.multiple_register_read("holding", 3109, 1, "FLOAT32")
+            incoming_data_part6 = self.client.multiple_register_read("holding", 3763, 4, "FLOAT32")
+            incoming_data_part6_1 = self.client.multiple_register_read("holding", 3771, 1, "DATETIME")
+            incoming_data_part7 = self.client.multiple_register_read("holding", 3779, 4, "FLOAT32")
+            incoming_data_part7_1 = self.client.multiple_register_read("holding", 3787, 1, "DATETIME")
+            incoming_data_part8 = self.client.multiple_register_read("holding", 3795, 4, "FLOAT32")
+            incoming_data_part8_1 = self.client.multiple_register_read("holding", 3803, 1, "DATETIME")
+            incoming_data_part9 = self.client.multiple_register_read("holding", 3875, 4, "FLOAT32")
+            incoming_data_part10 = self.client.multiple_register_read("holding", 3883, 1, "DATETIME")
+
             try:
+                incoming_data_part6 = incoming_data_part6 + incoming_data_part6_1
+                incoming_data_part7 = incoming_data_part7 + incoming_data_part7_1
+                incoming_data_part8 = incoming_data_part8 + incoming_data_part8_1
                 incoming_data = incoming_data_part1 + \
                                 incoming_data_part2 + \
                                 incoming_data_part3 + \
@@ -701,120 +712,103 @@ class GateWay:
                                 incoming_data_part6 + \
                                 incoming_data_part7 + \
                                 incoming_data_part8 + \
-                                incoming_data_part9
+                                incoming_data_part9 + \
+                                incoming_data_part10
 
-                for val in incoming_data:
-                    if val != val:
-                        return {"substation_id": 0}
+                # for val in incoming_data:
+                #     if val != val:
+                #         return {"substation_id": 0}
 
                 dict_data_out = {
                     "substation_id": self.electrical_substation_id,
                     "unitId": rs_485_address,
-                    "Current_A": incoming_data[0],
-                    "Current_B": incoming_data[1],
-                    "Current_C": incoming_data[2],
-                    "Current_N": incoming_data[3],
-                    "Current_G": incoming_data[4],
-                    "Current_Avg": incoming_data[5],
 
-                    "Current_Unbalance_A": incoming_data[6],
-                    "Current_Unbalance_B": incoming_data[7],
-                    "Current_Unbalance_C": incoming_data[8],
-                    "Current_Unbalance_Worst": incoming_data[9],
+                    "Active_Energy_Delivered": incoming_data[0],
+                    "Active_Energy_Received": incoming_data[1],
+                    "Active_Energy_Delivered_Pos_Received": incoming_data[2],
+                    "Active_Energy_Delivered_Neg_Received": incoming_data[3],
+                    "Reactive_Energy_Delivered": incoming_data[4],
+                    "Reactive_Energy_Received": incoming_data[5],
+                    "Reactive_Energy_Delivered_Pos_Received": incoming_data[6],
+                    "Reactive_Energy_Delivered_Neg_Received": incoming_data[7],
+                    "Apparent_Energy_Delivered": incoming_data[8],
+                    "Apparent_Energy_Received": incoming_data[9],
+                    "Apparent_Energy_Delivered_Pos_Received": incoming_data[10],
+                    "Apparent_Energy_Delivered_Neg_Received": incoming_data[11],
 
-                    "Voltage_A_B": incoming_data[10],
-                    "Voltage_B_C": incoming_data[11],
-                    "Voltage_C_A": incoming_data[12],
-                    "Voltage_L_L_Avg": incoming_data[13],
-                    "Voltage_A_N": incoming_data[14],
-                    "Voltage_B_N": incoming_data[15],
-                    "Voltage_C_N": incoming_data[16],
-                    "Voltage_L_N_Avg": incoming_data[17],
+                    "Current_A": incoming_data[12],
+                    "Current_B": incoming_data[13],
+                    "Current_C": incoming_data[14],
+                    "Current_N": incoming_data[15],
+                    "Current_G": incoming_data[16],
+                    "Current_Avg": incoming_data[17],
 
-                    "Voltage_Unbalance_A_B": incoming_data[18],
-                    "Voltage_Unbalance_B_C": incoming_data[19],
-                    "Voltage_Unbalance_C_A": incoming_data[20],
-                    "Voltage_Unbalance_L_L_Worst": incoming_data[21],
-                    "Voltage_Unbalance_A_N": incoming_data[22],
-                    "Voltage_Unbalance_B_N": incoming_data[23],
-                    "Voltage_Unbalance_C_N": incoming_data[24],
-                    "Voltage_Unbalance_L_N_Worst": incoming_data[25],
+                    "Voltage_A_B": incoming_data[18],
+                    "Voltage_B_C": incoming_data[19],
+                    "Voltage_C_A": incoming_data[20],
+                    "Voltage_L_L_Avg": incoming_data[21],
+                    "Voltage_A_N": incoming_data[22],
+                    "Voltage_B_N": incoming_data[23],
+                    "Voltage_C_N": incoming_data[24],
+                    "Voltage_L_N_Avg": incoming_data[26],
 
-                    "Active_Power_A": incoming_data[26],
-                    "Active_Power_B": incoming_data[27],
+                    "Active_Power_A": incoming_data[27],
+                    "Active_Power_B": incoming_data[28],
                     "Active_Power_C": incoming_data[28],
-                    "Active_Power_Total": incoming_data[29],
-                    "Reactive_Power_A": incoming_data[30],
-                    "Reactive_Power_B": incoming_data[31],
-                    "Reactive_Power_C": incoming_data[32],
-                    "Reactive_Power_Total": incoming_data[33],
-                    "Apparent_Power_A": incoming_data[34],
-                    "Apparent_Power_B": incoming_data[35],
-                    "Apparent_Power_C": incoming_data[36],
-                    "Apparent_Power_Total": incoming_data[37],
+                    "Active_Power_Total": incoming_data[30],
+                    "Reactive_Power_A": incoming_data[31],
+                    "Reactive_Power_B": incoming_data[32],
+                    "Reactive_Power_C": incoming_data[33],
+                    "Reactive_Power_Total": incoming_data[34],
+                    "Apparent_Power_A": incoming_data[35],
+                    "Apparent_Power_B": incoming_data[36],
+                    "Apparent_Power_C": incoming_data[37],
+                    "Apparent_Power_Total": incoming_data[38],
 
-                    "Power_Factor_A": incoming_data[38],
-                    "Power_Factor_B": incoming_data[39],
-                    "Power_Factor_C": incoming_data[40],
-                    # "Power_Factor_Total": incoming_data[41],
-                    "Power_Factor_Total": incoming_data[47],
-                    "Displacement_Power_Factor_A": incoming_data[42],
-                    "Displacement_Power_Factor_B": incoming_data[43],
-                    "Displacement_Power_Factor_C": incoming_data[44],
-                    "Displacement_Power_Factor_Total": incoming_data[45],
+                    "Power_Factor_A": incoming_data[39],
+                    "Power_Factor_B": incoming_data[40],
+                    "Power_Factor_C": incoming_data[41],
+                    "Power_Factor_Total": incoming_data[42],
+                    "Displacement_Power_Factor_A": incoming_data[43],
+                    "Displacement_Power_Factor_B": incoming_data[44],
+                    "Displacement_Power_Factor_C": incoming_data[45],
+                    "Displacement_Power_Factor_Total": incoming_data[46],
 
-                    "Frequency": incoming_data[46],
+                    "Frequency": incoming_data[47],
 
-                    # "Power_Factor_Total_IEEE": incoming_data[47],
+                    "Active_Power_Last_Demand": incoming_data[48],
+                    "Active_Power_Present_Demand": incoming_data[49],
+                    "Active_Power_Predicted_Demand": incoming_data[50],
+                    "Active_Power_Peak_Demand": incoming_data[51],
+                    "Active_Power_PK_DT_Demand": incoming_data[52],
 
-                    "Active_Energy_Delivered_Into_Load": incoming_data[48],
-                    "Active_Energy_Received_Out_of_Load": incoming_data[49],
-                    "Active_Energy_Delivered_Pos_Received": incoming_data[50],
-                    "Active_Energy_Delivered_Neg_Received": incoming_data[51],
-                    "Reactive_Energy_Delivered": incoming_data[52],
-                    "Reactive_Energy_Received": incoming_data[53],
-                    "Reactive_Energy_Delivered_Pos_Received": incoming_data[54],
-                    "Reactive_Energy_Delivered_Neg_Received": incoming_data[55],
-                    "Apparent_Energy_Delivered": incoming_data[56],
-                    "Apparent_Energy_Received": incoming_data[57],
-                    "Apparent_Energy_Delivered_Pos_Received": incoming_data[58],
-                    "Apparent_Energy_Delivered_Neg_Received": incoming_data[59],
+                    "Reactive_Power_Last_Demand": incoming_data[53],
+                    "Reactive_Power_Present_Demand": incoming_data[54],
+                    "Reactive_Power_Predicted_Demand": incoming_data[55],
+                    "Reactive_Power_Peak_Demand": incoming_data[56],
+                    "Reactive_Power_PK_DT_Demand": incoming_data[57],
 
-                    "Reactive_Energy_in_Quadrant_I": incoming_data[60],
-                    "Reactive_Energy_in_Quadrant_II": incoming_data[61],
-                    "Reactive_Energy_in_Quadrant_III": incoming_data[62],
-                    "Reactive_Energy_in_Quadrant_IV": incoming_data[63],
+                    "Apparent_Power_Last_Demand": incoming_data[58],
+                    "Apparent_Power_Present_Demand": incoming_data[59],
+                    "Apparent_Power_Predicted_Demand": incoming_data[60],
+                    "Apparent_Power_Peak_Demand": incoming_data[61],
+                    "Apparent_Power_PK_DT_Demand": incoming_data[62],
 
-                    "Active_Energy_Delivered_Into_Load_Permanent": incoming_data[64],
-                    "Active_Energy_Received_Out_of_Load_Permanent": incoming_data[65],
-                    "Active_Energy_Delivered_Pos_Received_Permanent": incoming_data[66],
-                    "Active_Energy_Delivered_Neg_Received_Permanent": incoming_data[67],
-                    "Reactive_Energy_Delivered_Permanent": incoming_data[68],
-                    "Reactive_Energy_Received_Permanent": incoming_data[69],
-                    "Reactive_Energy_Delivered_Pos_Received_Permanent": incoming_data[70],
-                    "Reactive_Energy_Delivered_Neg_Received_Permanent": incoming_data[71],
-                    "Apparent_Energy_Delivered_Permanent": incoming_data[72],
-                    "Apparent_Energy_Received_Permanent": incoming_data[73],
-                    "Apparent_Energy_Delivered_Pos_Received_Permanent": incoming_data[74],
-                    "Apparent_Energy_Delivered_Neg_Received_Permanent": incoming_data[75],
-
-                    "Active_Energy_Delivered_Phase_A": incoming_data[76],
-                    "Active_Energy_Delivered_Phase_B": incoming_data[77],
-                    "Active_Energy_Delivered_Phase_C": incoming_data[78],
-                    "Reactive_Energy_Delivered_Phase_A": incoming_data[79],
-                    "Reactive_Energy_Delivered_Phase_B": incoming_data[80],
-                    "Reactive_Energy_Delivered_Phase_C": incoming_data[81],
-                    "Apparent_Energy_Delivered_Phase_A": incoming_data[82],
-                    "Apparent_Energy_Delivered_Phase_B": incoming_data[83],
-                    "Apparent_Energy_Delivered_Phase_C": incoming_data[84]
+                    "Current_Avg_Last_Demand": incoming_data[63],
+                    "Current_Avg_Present_Demand": incoming_data[64],
+                    "Current_Avg_Predicted_Demand": incoming_data[65],
+                    "Current_Avg_Peak_Demand": incoming_data[66],
+                    "Current_Avg_PK_DT_Demand": incoming_data[67],
                 }
 
                 # json_data_out = json.dumps(dict_data_out, indent=2)
 
                 return dict_data_out
 
-            except:
+            except Exception as e:
+                # print(e)
                 # print("Error in Read Data From PM2100")
                 return {"substation_id": -1}
         else:
+            # print("NAN number")
             return {"substation_id": -1}

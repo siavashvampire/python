@@ -11,34 +11,40 @@ Render = LoggingDB.table('LineMonitoring')
 electrical = LoggingDB.table('LineMonitoring')
 Bale = LoggingDB.table('Bale')
 Sender = LoggingDB.table('Sender')
-
+# TODO: bayad inja y thread bezarin v dakhele hamin function haw queue on thread ro por konim
 
 def write_type(location, result):
     return {'location': location, "result": result, "Time": str(datetime.now().strftime(time_format))}
 
 
 def main_log(location, result):
-    Main.insert(write_type(location, result))
+    # Main.insert(write_type(location, result))
+    pass
 
 
 def da_log(location, result):
-    PLC.insert(write_type(location, result))
+    # PLC.insert(write_type(location, result))
+    pass
 
 
 def line_monitoring_log(location, result):
-    Render.insert(write_type(location, result))
+    # Render.insert(write_type(location, result))
+    pass
 
 
 def electrical_log(location, result):
-    electrical.insert(write_type(location, result))
+    # electrical.insert(write_type(location, result))
+    pass
 
 
 def bale_log(location, result):
-    Bale.insert(write_type(location, result))
+    # Bale.insert(write_type(location, result))
+    pass
 
 
 def sender_log(location, result):
     Sender.insert(write_type(location, result))
+    pass
 
 
 def drop_main_db():

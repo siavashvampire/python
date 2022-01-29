@@ -150,7 +150,6 @@ class DataArchive:
                        'content-type': "multipart/form-data; boundary=" + boundary_for_payload}
             status, r = site_connection(url, send_timeout, data=payload, header=headers)
             good, index, error, should_update = send_data_rh(r, status)
-            # self.insertFlag = RH(r, status)
 
         s_doc_id = [data[i].doc_id for i in index]
         return good, should_update, s_doc_id

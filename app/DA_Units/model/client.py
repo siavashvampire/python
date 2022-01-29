@@ -56,7 +56,7 @@ class MersadModbusClient(ModbusClient):
                 return uint_16bit_val
 
     def multiple_register_read(self, _input_or_holding: str, _address: int, _length: int, _data_type: str,
-                               _big_endian: bool = False):
+                               _big_endian: bool = True):
         _length = self.get_correct_length_by_data_type(_data_type, _length)
 
         if _input_or_holding == "input":
@@ -106,7 +106,7 @@ class MersadModbusClient(ModbusClient):
             return _length * 2
         elif _data_type == "INT16":
             return _length
-        elif _data_type == "INT64":
+        elif _data_type == "INT64" or _data_type == "DATETIME":
             return _length * 4
         else:
             return _length
@@ -127,6 +127,27 @@ class MersadModbusClient(ModbusClient):
                 this_int_64 = (data[0:4][3] << 16 * 3) + (data[0:4][2] << 16 * 2) + (data[0:4][1] << 16 * 1) + \
                               data[0:4][0]
                 list_float.append(this_int_64)
+                del data[0:4]
+
+            return list_float
+        elif _data_type == "DATETIME":
+            while len(data) >= 4:
+                dataTemp = data[0:4]
+                year = 2000 + dataTemp[0]
+                num2 = format(dataTemp[1], "b")
+                day = int(num2[-5:], 2)
+                month = int(num2[-12:-8], 2)
+
+                num3 = format(dataTemp[2], "b")
+                minute = int(num3[-6:], 2)
+                hour = int(num3[-13:-8], 2)
+
+                second = int(dataTemp[3] / 1000)
+                list = "{Year}-{Month}-{Day} {Hour}:{Minute}:{Second}".format(Year=year, Month=month, Day=day,
+                                                                              Hour=hour,
+                                                                              Minute=minute,
+                                                                              Second=second)
+                list_float.append(list)
                 del data[0:4]
 
             return list_float

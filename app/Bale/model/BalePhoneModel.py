@@ -7,7 +7,7 @@ from core.config.Config import phone_db_path, phone_table_name, choose_of_bale
 
 class BalePhoneModel(PhoneModel):
     def __init__(self, name: str = "", id_in: int = 0, send_on_off: bool = False, units: str = "-4", phase: str = "-4",
-                 access: bool = False,bot : Bot = None) -> None:
+                 access: bool = False, bot: Bot = None) -> None:
         super().__init__(name=name, phone=id_in, units=units, phase=phase, access=access, choose=choose_of_bale)
         self.bot = bot
         self.SendONOFF = bool(send_on_off)
@@ -51,5 +51,5 @@ class BalePhoneModel(PhoneModel):
         else:
             return self.phase
 
-    def send(self,text:str):
+    def send(self, text: str):
         self.bot.send_message(self.id, text)

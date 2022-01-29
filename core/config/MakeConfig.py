@@ -194,7 +194,7 @@ logging_db_name = 'logging_db.json'
 phone_db_name = 'phone_property_db.json'
 phone_table_name = 'phone'
 sms_phone_db_name = 'phone_property_db.json'
-sms_phone_table_name = 'sms_phone'
+sms_phone_table_name = 'phone'
 backup_db_name = 'backup_property_db.json'
 backup_table_name ='Backup'
 last_log_db_name = 'last_log_db.json'
@@ -232,7 +232,7 @@ config_db.update({"device_table_name": str(device_table_name)})
 
 # Start  URL Config
 if developer:
-    main_url = "http://192.168.1.4/Hafez/Monitoring_Tile/"
+    main_url = "http://localhost/Hafez/"
 else:
     main_url = "http://localhost/"
 
@@ -240,8 +240,8 @@ get_sensor_url = "api/line_monitoring_update/sensor"
 get_switch_url = "api/line_monitoring_update/cam_switch"
 get_device_url = "api/electrical_update/device"
 get_da_unit_url = "api/DAUnits_update/DAUnits"
-get_phones_url = "api/contacts_update/BaleItems"
-get_sms_phones_url = "api/contacts_update/SmsItems"
+get_phones_url = "api/contacts_update/Phones"
+get_sms_phones_url = "api/contacts_update/Phones"
 get_admin_day_url = "api/get/adminDayCounter"
 get_is_day_update_url = "api/get/isDayUpdated"
 get_counter_url = "api/get/Counter"

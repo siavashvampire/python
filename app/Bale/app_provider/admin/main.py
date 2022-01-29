@@ -143,16 +143,16 @@ class BaleMain:
     def create_phones(self) -> None:
         r = TinyDB(phone_db_path).table(phone_table_name).search(Query().type == 1)
         phones = TinyDB(phone_db_path).table(phone_table_name).search(Query().type == 2)
-        whatsApp = TinyDB(phone_db_path).table(phone_table_name).search(Query().type == 3)
-        self.phones
+        # whatsApp = TinyDB(phone_db_path).table(phone_table_name).search(Query().type == 3)
+        self.phones = []
         for i in r:
             self.phones.append(
                 BalePhoneModel(i["name"], i["phone"], i["send_allow"], i["units"], i["phase"], i["access"],
                                bot=self.bot_main))
         for i in phones:
             self.phones.append(SMSPhones(i["name"], i["phone"], i["units"], i["phase"], i["access"]))
-        for i in whatsApp:
-            self.phones.append(SMSPhones(i["name"], i["phone"], i["units"], i["phase"], i["access"]))
+        # for i in whatsApp:
+        #     self.phones.append(SMSPhones(i["name"], i["phone"], i["units"], i["phase"], i["access"]))
 
     def send_to_phones(self, stop_thread: Callable[[], bool]) -> None:
         while True:
@@ -170,8 +170,7 @@ class BaleMain:
                                 phone.send(text)
                             except Exception as e:
                                 self.Flag_Bale = False
-                                Logging.bale_log("Send Thread",
-                                                 "Error in send SMS with Number " + str(phone.id))
+                                Logging.bale_log("Send Thread", "Error in send SMS with Number " + str(phone.id))
                                 if login_developer:
                                     print("Error in send SMS with Phone " + str(phone.id))
                 else:

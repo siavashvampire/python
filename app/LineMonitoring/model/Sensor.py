@@ -43,16 +43,16 @@ class Sensor:
         if self.doc_id < 9 and self.doc_id and ui is not None:
             self.lbl_Data_Name = ui.lbl_Data_Name[self.doc_id - 1]
             self.lbl_Data = ui.lbl_Data[self.doc_id - 1]
-            self.lbl_Data_Status = ui.lbl_Data_Status[self.doc_id - 1]
+            self.lbl_Status = ui.lbl_Data_Status[self.doc_id - 1]
             self.lbl_Data_Name.setText(str(self.label))
 
             if self.Active:
-                self.lbl_Data_Status.setPixmap(Pics.checkMark)
+                self.lbl_Status.setPixmap(Pics.checkMark)
             else:
-                self.lbl_Data_Status.setPixmap(Pics.deleteMark)
+                self.lbl_Status.setPixmap(Pics.deleteMark)
 
             if self.OffTime == 0:
-                self.lbl_Data_Status.setPixmap(Pics.MinusMark)
+                self.lbl_Status.setPixmap(Pics.MinusMark)
         else:
             self.lbl_Data_Name = QLabel()
             self.lbl_Data = QLabel()
@@ -124,9 +124,9 @@ class Sensor:
                 from core.theme.pic import Pics
 
                 if self.Active:
-                    self.lbl_Data_Status.setPixmap(Pics.checkMark)
+                    self.lbl_Status.setPixmap(Pics.checkMark)
                 else:
-                    self.lbl_Data_Status.setPixmap(Pics.deleteMark)
+                    self.lbl_Status.setPixmap(Pics.deleteMark)
 
     def get_data(self, value, time):
         data_temp = dict(self.data_type)
